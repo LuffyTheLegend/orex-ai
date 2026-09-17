@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">Oppa chat bubble icon</title>
+  <desc id="desc">Blue and white overlapping chat bubbles</desc>
+
+  <defs>
+    <radialGradient id="oppa-blue-bubble" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="40%" stop-color="#74c7ff"/>
+      <stop offset="100%" stop-color="#0078d7"/>
+    </radialGradient>
+    <radialGradient id="oppa-white-bubble" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#e1e1e1"/>
+    </radialGradient>
+    <filter id="oppa-glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(3 1.5) scale(.5)" filter="url(#oppa-glow)">
+    <path
+      d="M30 90Q30 30 100 30t70 60q0 60-40 60l-30 25v-25q-70 0-70-60Z"
+      fill="url(#oppa-blue-bubble)"
+    />
+    <path
+      d="M100 130q0-40 40-40t40 40q0 40-20 40l-15 15v-15q-45 0-45-40Z"
+      fill="url(#oppa-white-bubble)"
+      stroke="#fff"
+      stroke-width="3"
+    />
+    <circle cx="125" cy="130" r="6" fill="#4a6b8a"/>
+    <circle cx="140" cy="130" r="6" fill="#4a6b8a"/>
+    <circle cx="155" cy="130" r="6" fill="#4a6b8a"/>
+  </g>
+</svg>
