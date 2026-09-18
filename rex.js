@@ -1,7 +1,7 @@
 // Orex AI - Groq chat with improved security, UX, accessibility, and features
 
 const GROQ_MODEL = "groq/compound"; // has built-in real-time web search, so Orex isn't frozen at its training cutoff
-const GROQ_VISION_MODEL = "qwen/qwen3.6-27b"; // current Groq vision-capable model
+const GROQ_VISION_MODEL = "qwen/qwen3.6-27b"; // meta-llama/llama-4-scout-17b-16e-instruct (the previous choice) was shut down by Groq on 07/17/2026 for free/dev tier — qwen3.6-27b is Groq's own current recommended vision replacement. It runs in "thinking mode" by default, which is exactly what the reasoning_format + extraction logic below is for.
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MAX_HISTORY = 20;
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -412,8 +412,8 @@ async function handleSubmit(e) {
   removeTypingIndicator();
 
   if (reply) {
-    addMessageToChat(currentChatId, "rex", { type: "text", text: reply });
-    extractMemoryFacts(text, reply); // fire-and-forget, runs in the background
+    addMessageToChat(currentChatId, "rex", { type: "text", text: reply.content, thinking: reply.thinking });
+    extractMemoryFacts(text, reply.content); // fire-and-forget, runs in the background
   } else {
     addFailedReplyMessage();
   }
@@ -838,7 +838,7 @@ function renderCurrentChat() {
 
   chat.messages.forEach((msg) => {
     if (msg.type === "text") {
-      renderTextMessage(msg.role, msg.text);
+      renderTextMessage(msg.role, msg.text, msg.thinking);
     } else if (msg.type === "image") {
       renderImageMessage(msg.role, msg.src);
     } else if (msg.type === "file") {
@@ -861,7 +861,7 @@ function addMessageToChat(chatId, sender, content) {
 
   // Render it immediately so the user actually sees it
   if (messageToStore.type === "text") {
-    renderTextMessage(sender, messageToStore.text);
+    renderTextMessage(sender, messageToStore.text, messageToStore.thinking);
   } else if (messageToStore.type === "image") {
     renderImageMessage(sender, messageToStore.src);
   } else if (messageToStore.type === "file") {
@@ -901,13 +901,14 @@ function buildCopyIconButton(getText, label = "Copy message") {
   return btn;
 }
 
-function renderTextMessage(role, text) {
+function renderTextMessage(role, text, thinking) {
   const msg = document.createElement("div");
   msg.className = "msg " + role;
 
   if (role === "rex") {
-    msg.innerHTML = marked.parse(text || "");
-    
+    const rawHtml = marked.parse(text || "");
+    msg.innerHTML = window.DOMPurify ? DOMPurify.sanitize(rawHtml) : rawHtml;
+
     msg.querySelectorAll("pre code").forEach((block) => {
       hljs.highlightElement(block);
     });
@@ -926,6 +927,29 @@ function renderTextMessage(role, text) {
       pre.style.position = "relative";
       pre.appendChild(copyBtn);
     });
+
+    if (thinking && thinking.trim()) {
+      const thinkBlock = document.createElement("div");
+      thinkBlock.className = "think-block";
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.className = "think-toggle";
+      toggleBtn.innerHTML = "🧠 Show thinking";
+
+      const thinkBody = document.createElement("div");
+      thinkBody.className = "think-body hidden";
+      thinkBody.textContent = thinking.trim();
+
+      toggleBtn.onclick = () => {
+        const isHidden = thinkBody.classList.toggle("hidden");
+        toggleBtn.innerHTML = isHidden ? "🧠 Show thinking" : "🧠 Hide thinking";
+      };
+
+      thinkBlock.appendChild(toggleBtn);
+      thinkBlock.appendChild(thinkBody);
+      msg.insertBefore(thinkBlock, msg.firstChild);
+    }
   } else {
     msg.textContent = text;
   }
@@ -1103,6 +1127,27 @@ async function callGroq(message, images = []) {
 
   const model = images.length > 0 ? GROQ_VISION_MODEL : GROQ_MODEL;
 
+  // Only the vision model actually has a "thinking mode" that needs this —
+  // groq/compound is a different (agentic) model family, and Groq's API
+  // hard-rejects reasoning_format on model families that don't expect it,
+  // so this must NOT be sent unconditionally on every request.
+  const requestBody = { model };
+  if (model === GROQ_VISION_MODEL) {
+    requestBody.reasoning_format = "parsed";
+  }
+  requestBody.messages = [
+    {
+      role: "system",
+      content:
+        getIdentityPromptLine() +
+        getTodayPromptLine() +
+        (MODE_SYSTEM_PROMPTS[currentMode] || MODE_SYSTEM_PROMPTS.smart) +
+        getMemoryPromptBlock(),
+    },
+    ...historyMessages,
+    { role: "user", content: userContent },
+  ];
+
   try {
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
@@ -1110,21 +1155,7 @@ async function callGroq(message, images = []) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${getApiKey()}`,
       },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: "system",
-            content:
-              getIdentityPromptLine() +
-              getTodayPromptLine() +
-              (MODE_SYSTEM_PROMPTS[currentMode] || MODE_SYSTEM_PROMPTS.smart) +
-              getMemoryPromptBlock(),
-          },
-          ...historyMessages,
-          { role: "user", content: userContent },
-        ],
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -1135,13 +1166,31 @@ async function callGroq(message, images = []) {
     }
 
     const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
+    const responseMessage = data?.choices?.[0]?.message;
+    let content = responseMessage?.content;
 
     if (!content || !String(content).trim()) {
       throw new Error("Orex sent back an empty response");
     }
 
-    return content;
+    // Reasoning can come back a few different ways depending on the model:
+    // reasoning_content (parsed reasoning models), reasoning (groq/compound's
+    // tool-use trace), or — if a model ignores reasoning_format — raw <think>
+    // tags still embedded in content. Handle all three so nothing leaks
+    // into the visible answer unfiltered.
+    let thinking = responseMessage?.reasoning_content || responseMessage?.reasoning || "";
+
+    const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/i);
+    if (thinkMatch) {
+      thinking = (thinking ? thinking + "\n\n" : "") + thinkMatch[1].trim();
+      content = content.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+    }
+
+    if (!content) {
+      throw new Error("Orex sent back an empty response");
+    }
+
+    return { content, thinking: thinking ? thinking.trim() : "" };
   } catch (error) {
     console.error("Groq API Error:", error);
     updateStatus("❌ Orex bonked his head (API Error)");
@@ -1469,6 +1518,17 @@ function buildConversationEntryFromMessage(msg) {
     };
   }
 
+  if (msg.type === "image") {
+    // We don't resend the actual image bytes on later turns (that would
+    // balloon every request's payload), but without this the model has zero
+    // record an image was ever shared — leading to exactly the "I'm still
+    // not able to see the picture" confusion on follow-up questions.
+    return {
+      role: "user",
+      text: "[Shared an image in this conversation]",
+    };
+  }
+
   return null;
 }
 
@@ -1611,7 +1671,7 @@ async function handleStartQuiz() {
   removeTypingIndicator();
 
   if (reply) {
-    addMessageToChat(currentChatId, "rex", { type: "text", text: reply });
+    addMessageToChat(currentChatId, "rex", { type: "text", text: reply.content, thinking: reply.thinking });
   } else {
     addFailedReplyMessage();
   }
@@ -1676,7 +1736,7 @@ async function handleResearchUrls() {
   removeTypingIndicator();
 
   if (reply) {
-    addMessageToChat(currentChatId, "rex", { type: "text", text: reply });
+    addMessageToChat(currentChatId, "rex", { type: "text", text: reply.content, thinking: reply.thinking });
   } else {
     addFailedReplyMessage();
   }
@@ -1768,7 +1828,7 @@ async function handleWikiLookup() {
   removeTypingIndicator();
 
   if (reply) {
-    addMessageToChat(currentChatId, "rex", { type: "text", text: reply });
+    addMessageToChat(currentChatId, "rex", { type: "text", text: reply.content, thinking: reply.thinking });
   } else {
     addFailedReplyMessage();
   }
@@ -1882,7 +1942,7 @@ async function handleDictLookup() {
   removeTypingIndicator();
 
   if (reply) {
-    addMessageToChat(currentChatId, "rex", { type: "text", text: reply });
+    addMessageToChat(currentChatId, "rex", { type: "text", text: reply.content, thinking: reply.thinking });
   } else {
     addFailedReplyMessage();
   }

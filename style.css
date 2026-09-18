@@ -473,6 +473,38 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .copy-btn:hover { background: #ffffff28; }
 
+/* Collapsible "thinking" block, shown above an AI reply when the model
+   returned reasoning content — collapsed by default. */
+.think-block { margin-bottom: 10px; }
+.think-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff14;
+  border: 1px solid #ffffff26;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.think-toggle:hover { background: #ffffff22; color: var(--text); }
+.think-body {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: #00000030;
+  border: 1px solid #ffffff1a;
+  border-radius: 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted-strong);
+  white-space: pre-wrap;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.think-body.hidden { display: none; }
+
 .msg-actions { display: flex; align-items: center; padding-bottom: 4px; }
 .msg-copy-btn {
   background: none;
