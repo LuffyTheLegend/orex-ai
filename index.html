@@ -1045,6 +1045,7 @@ async function streamReply(chat){
         if(payload==='[DONE]')continue;
         try{
           const j=JSON.parse(payload);
+          if(j.error)throw new Error(j.error.message||'Groq stream error');
           const d=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
           if(d){aMsg.content+=d;paint()}
         }catch(_){/* partial JSON */}
