@@ -1,395 +1,1427 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Orex AI - AI-powered chat app with Groq">
-  <link rel="icon" type="image/svg+xml" href="rex-favicon.svg">
-  <link rel="apple-touch-icon" href="rex-logo.svg">
-  <title>Orex AI • Groq Chat</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Markdown & Highlighting -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Orex AI — a fast, private, Groq-powered chat workspace. Your key, your chats, your device.">
+<title>Orex AI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M5 19.5C5 11.5 12.3 6 21 6s16 5.5 16 13.5S29.7 33 21 33c-1.9 0-3.8-.3-5.4-.8L8 35.5l1.7-5.6C6.8 27.4 5 23.7 5 19.5Z' fill='%230078d7'/%3E%3Cpath d='M26 27.5c0-4.7 4.2-8 9-8s9 3.3 9 8-4.2 8-9 8c-1.1 0-2.2-.2-3.2-.5L27 37l1.3-4.2c-1.4-1.4-2.3-3.2-2.3-5.3Z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0d12;--bg2:#0d1118;--bg3:#131a24;--raise:#182230;
+  --line:#202a38;--line2:#2b3850;
+  --ink:#e9eef6;--dim:#93a1b5;--faint:#5f6e84;
+  --accent:#4da3ff;--accent-strong:#1c86f0;--on-accent:#04101f;
+  --bubble-a:#111826;--bubble-u:#1b2b44;
+  --danger:#ff6161;--ok:#4ade80;--warn:#fbbf24;
+  --glass:rgba(13,17,24,.78);
+  --r:14px;--shadow:0 18px 50px rgba(0,0,0,.5);
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;
+}
+[data-theme="light"]{
+  --bg:#eef1f6;--bg2:#f7f9fc;--bg3:#ffffff;--raise:#ffffff;
+  --line:#dfe6ef;--line2:#c9d5e5;
+  --ink:#16202e;--dim:#54637a;--faint:#8b99ad;
+  --accent:#0078d7;--accent-strong:#0066bb;--on-accent:#fff;
+  --bubble-a:#ffffff;--bubble-u:#dfeafc;
+  --glass:rgba(247,249,252,.82);
+  --shadow:0 18px 50px rgba(30,60,110,.15);
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea{font:inherit;color:inherit}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+svg{display:block}
+.hidden{display:none!important}
+
+#scrim{position:fixed;inset:0;background:rgba(4,8,14,.5);z-index:25;opacity:0;pointer-events:none;transition:.25s}
+#scrim.show{opacity:1;pointer-events:auto}
+
+.app{display:grid;grid-template-columns:272px minmax(0,1fr);height:100dvh}
+
+/* ---------- sidebar ---------- */
+.sidebar{background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;z-index:30}
+.sidebar-header{display:flex;align-items:center;gap:11px;padding:18px 18px 14px}
+.logo{width:34px;height:34px;flex:none}
+.rex-title{font-weight:700;font-size:15.5px;letter-spacing:-.01em}
+.rex-subtitle{font-size:11.5px;color:var(--dim)}
+.sidebar-section{padding:4px 12px 10px;display:flex;flex-direction:column;gap:2px;min-height:0}
+.sidebar-section-chats{flex:1}
+.sidebar-label{font:600 10.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);padding:8px 8px 6px}
+.chat-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;min-height:60px;padding:0 2px}
+.chat-empty{color:var(--faint);font-size:13px;padding:10px 8px}
+.chat-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;cursor:pointer;color:var(--dim);border:1px solid transparent;transition:background .15s,color .15s}
+.chat-item:hover{background:var(--bg3);color:var(--ink)}
+.chat-item.active{background:var(--bg3);color:var(--ink);border-color:var(--line);box-shadow:inset 2px 0 0 var(--accent)}
+.chat-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+input.rename{flex:1;min-width:0;background:var(--bg);border:1px solid var(--accent);border-radius:7px;padding:4px 8px;font-size:13px;outline:none}
+.badge-temp{font:600 9.5px var(--mono);letter-spacing:.06em;color:var(--warn);border:1px solid rgba(251,191,36,.4);padding:1px 5px;border-radius:5px;text-transform:uppercase;flex:none}
+.chat-del{opacity:0;flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:var(--faint)}
+.chat-item:hover .chat-del{opacity:1}
+.chat-del:hover{background:rgba(255,97,97,.14);color:var(--danger)}
+.sidebar-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;font-size:13.5px;color:var(--dim);transition:.15s;text-align:left}
+.sidebar-btn:hover{background:var(--bg3);color:var(--ink)}
+.sidebar-btn svg{flex:none;opacity:.85}
+#new-chat-btn{background:var(--accent);color:var(--on-accent);font-weight:600;justify-content:center;margin-top:6px}
+#new-chat-btn:hover{background:var(--accent-strong);color:var(--on-accent)}
+
+/* ---------- main / header ---------- */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--glass);backdrop-filter:blur(8px)}
+.status-wrap{display:flex;align-items:center;gap:14px;min-width:0}
+#menu-btn{display:none}
+#status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+#status::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+#status.busy::before{background:var(--warn);animation:pulse 1s infinite}
+#status.err::before{background:var(--danger)}
+@keyframes pulse{50%{opacity:.3}}
+.msg-count{font:500 11px var(--mono);color:var(--faint);letter-spacing:.04em;white-space:nowrap}
+.header-buttons{display:flex;gap:6px}
+.header-btn{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:9px;font-size:12.5px;color:var(--dim);border:1px solid transparent}
+.header-btn:hover{background:var(--bg3);color:var(--ink)}
+.theme-icon svg{width:15px;height:15px}
+.theme-icon .i-sun{display:none}
+[data-theme="light"] .theme-icon .i-sun{display:block}
+[data-theme="light"] .theme-icon .i-moon{display:none}
+
+/* ---------- chat log ---------- */
+.chat-log{flex:1;overflow-y:auto;padding:26px 18px 10px;min-height:0}
+.msg{max-width:840px;margin:0 auto 20px;display:flex;gap:11px;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+.avatar{width:30px;height:30px;border-radius:9px;background:var(--bg3);border:1px solid var(--line);display:grid;place-items:center;flex:none;overflow:hidden;color:var(--accent)}
+.avatar svg{width:17px;height:17px}
+.avatar.you{background:var(--accent);color:var(--on-accent);font:600 12.5px var(--sans);border:0}
+.bubble{max-width:min(720px,88%);min-width:0;background:var(--bubble-a);border:1px solid var(--line);border-radius:16px;padding:11px 15px 9px}
+.msg.user .bubble{background:var(--bubble-u)}
+.msg-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:4px}
+.who{font-size:12px;font-weight:600}
+.when{font:400 10.5px var(--mono);color:var(--faint)}
+.msg-body{font-size:14.5px;line-height:1.65;overflow-wrap:break-word}
+.msg-body.plain{white-space:pre-wrap}
+.msg-body p{margin:.35em 0}
+.msg-body :is(h1,h2,h3,h4){margin:.7em 0 .3em;line-height:1.3}
+.msg-body :is(ul,ol){margin:.4em 0 .4em 1.3em}
+.msg-body li{margin:.15em 0}
+.msg-body img{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+.msg-body blockquote{border-left:3px solid var(--line2);padding-left:12px;color:var(--dim);margin:.5em 0}
+.msg-body hr{border:0;border-top:1px solid var(--line);margin:1em 0}
+.msg-body table{border-collapse:collapse;margin:.5em 0;font-size:13.5px;display:block;overflow-x:auto}
+.msg-body :is(th,td){border:1px solid var(--line);padding:6px 10px}
+.msg-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.msg-imgs img{width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.msg-acts{display:flex;gap:4px;margin-top:6px;opacity:0;transition:opacity .15s}
+.msg:hover .msg-acts{opacity:1}
+.msg-acts button{font-size:11.5px;color:var(--faint);padding:3px 8px;border-radius:6px}
+.msg-acts button:hover{background:var(--bg3);color:var(--ink)}
+.err-box{color:var(--danger);background:rgba(255,97,97,.08);border:1px solid rgba(255,97,97,.25);padding:9px 12px;border-radius:10px;font-size:13.5px}
+.msg-body pre{background:#0b0f16;border:1px solid var(--line);border-radius:11px;margin:10px 0;overflow:hidden}
+[data-theme="light"] .msg-body pre{border-color:#d7e0ec}
+.code-head{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.07);font:500 11px var(--mono);color:#7d8b9e}
+.code-copy{color:#7d8b9e;font:500 11px var(--mono);padding:2px 7px;border-radius:5px}
+.code-copy:hover{color:#fff;background:rgba(255,255,255,.08)}
+.msg-body pre code{display:block;padding:12px 14px;overflow-x:auto;font:12.5px/1.6 var(--mono);background:transparent}
+.msg-body :not(pre)>code{font:500 12.5px var(--mono);background:var(--bg3);border:1px solid var(--line);padding:1px 5px;border-radius:5px}
+.typing{display:inline-flex;gap:4px;padding:4px 2px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:bounce 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}
+.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+.caret::after{content:'▍';color:var(--accent);animation:pulse 1s infinite;margin-left:1px}
+
+/* ---------- empty hero ---------- */
+.hero-empty{max-width:620px;margin:10vh auto 0;text-align:center;padding:0 12px}
+.hero-logo{width:62px;height:62px;margin:0 auto 18px;filter:drop-shadow(0 10px 24px rgba(0,120,215,.35))}
+.hero-empty h1{font-size:clamp(22px,3.4vw,30px);font-weight:700;letter-spacing:-.02em}
+.hero-empty p{color:var(--dim);margin:8px 0 26px;font-size:14px}
+.sugs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sug{text-align:left;border:1px solid var(--line);background:var(--bg2);border-radius:12px;padding:13px 15px;font-size:13.5px;color:var(--dim);transition:.15s}
+.sug:hover{border-color:var(--accent);color:var(--ink);transform:translateY(-1px)}
+
+/* ---------- input area ---------- */
+.input-area{position:relative;padding:10px 18px 16px}
+.previews{max-width:840px;margin:0 auto 8px;display:flex;gap:8px;flex-wrap:wrap}
+.previews:empty{display:none}
+.pv{position:relative;display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:12px;color:var(--dim);max-width:220px}
+.pv img{width:34px;height:34px;object-fit:cover;border-radius:7px}
+.pv span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv button{color:var(--faint);flex:none}
+.pv button:hover{color:var(--danger)}
+.input-bar{max-width:840px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;background:var(--bg2);border:1px solid var(--line2);border-radius:18px;padding:8px;box-shadow:var(--shadow);transition:border-color .2s}
+.input-bar:focus-within{border-color:var(--accent)}
+.mode-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--dim);padding:8px 11px;border-radius:11px;flex:none}
+.mode-btn:hover{background:var(--bg3);color:var(--ink)}
+.attach-btn{width:37px;height:37px;flex:none;border-radius:11px;background:var(--bg3);border:1px solid var(--line);font-size:19px;line-height:1;color:var(--dim);display:grid;place-items:center;padding-bottom:2px}
+.attach-btn:hover{color:var(--accent);border-color:var(--accent)}
+#user-input{flex:1;background:none;border:0;outline:none;resize:none;max-height:170px;padding:9px 4px;font-size:14.5px;line-height:1.5}
+#user-input::placeholder{color:var(--faint)}
+.send-btn{flex:none;height:37px;padding:0 16px;border-radius:11px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:13.5px;transition:.15s}
+.send-btn:hover{background:var(--accent-strong)}
+.send-btn.stop{background:var(--danger);color:#fff}
+
+/* ---------- floating menus ---------- */
+.menu{position:absolute;left:50%;transform:translateX(-50%) translateY(6px);bottom:calc(100% - 6px);background:var(--bg3);border:1px solid var(--line2);border-radius:16px;box-shadow:var(--shadow);padding:6px;min-width:280px;opacity:0;pointer-events:none;transition:.18s;z-index:20}
+.menu.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+.mode-menu{min-width:330px}
+.attach-item,.mode-item{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:10px 12px;border-radius:11px}
+.attach-item:hover,.mode-item:hover{background:var(--bg2)}
+.attach-icon,.mode-icon{width:30px;height:30px;flex:none;border-radius:9px;background:var(--bg2);border:1px solid var(--line);display:grid;place-items:center;color:var(--accent)}
+.mode-text{display:flex;flex-direction:column;gap:1px}
+.mode-text strong{font-size:13.5px}
+.mode-text small{color:var(--dim);font-size:12px}
+
+/* ---------- modals ---------- */
+.overlay{position:fixed;inset:0;background:rgba(4,8,14,.6);backdrop-filter:blur(6px);display:grid;place-items:center;padding:18px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+[data-theme="light"] .overlay{background:rgba(40,60,90,.35)}
+.overlay.show{opacity:1;pointer-events:auto}
+.popup{width:min(520px,100%);background:var(--bg2);border:1px solid var(--line2);border-radius:20px;padding:24px;box-shadow:var(--shadow);transform:translateY(10px) scale(.98);transition:transform .22s cubic-bezier(.2,.9,.3,1);max-height:86dvh;overflow-y:auto}
+.overlay.show .popup{transform:none}
+.popup h2{font-size:18px;letter-spacing:-.01em;margin-bottom:6px}
+.popup>p{color:var(--dim);font-size:13.5px;margin-bottom:14px}
+.popup>input,.popup>textarea{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:11px;padding:11px 13px;font-size:14px;outline:none;transition:border-color .2s;margin-bottom:12px}
+.popup>input:focus,.popup>textarea:focus{border-color:var(--accent)}
+.popup textarea{resize:vertical;min-height:96px;font-size:13.5px;line-height:1.5}
+.popup-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.btn-primary,.btn-secondary,.btn-danger{padding:10px 18px;border-radius:11px;font-size:13.5px;font-weight:600;transition:.15s}
+.btn-primary{background:var(--accent);color:var(--on-accent)}
+.btn-primary:hover{background:var(--accent-strong)}
+.btn-secondary{background:var(--bg3);border:1px solid var(--line2);color:var(--dim)}
+.btn-secondary:hover{color:var(--ink)}
+.btn-danger{background:rgba(255,97,97,.12);border:1px solid rgba(255,97,97,.4);color:var(--danger)}
+.btn-danger:hover{background:rgba(255,97,97,.2)}
+.checkbox-label{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--dim);cursor:pointer;margin:4px 0 8px}
+.checkbox-label input{accent-color:var(--accent);width:15px;height:15px}
+.temp-hint{color:var(--faint);font-size:12px}
+
+/* about */
+.about-head{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.about-logo{width:46px;height:46px}
+.about-eyebrow{font:600 10.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.about-copy{color:var(--dim);font-size:13.5px;margin-bottom:14px}
+.about-section h3{font-size:12.5px;margin:14px 0 8px;text-transform:uppercase;letter-spacing:.08em}
+.feature-list{margin-left:18px;color:var(--dim);font-size:13px;display:grid;gap:4px}
+.about-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 10px}
+.about-card{background:var(--bg3);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.about-label{display:block;font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+.about-card strong{font-size:13.5px}
+.about-fineprint{color:var(--faint);font-size:12px;margin:10px 0 4px}
+
+/* settings */
+.settings-modal{width:min(760px,100%);padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:86dvh}
+.settings-header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.settings-close-x{width:30px;height:30px;border-radius:9px;color:var(--dim);font-size:14px}
+.settings-close-x:hover{background:var(--bg3);color:var(--ink)}
+.settings-body{display:grid;grid-template-columns:190px 1fr;min-height:0;flex:1}
+.settings-nav{border-right:1px solid var(--line);padding:12px 10px;display:flex;flex-direction:column;gap:3px}
+.settings-tab{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-size:13.5px;color:var(--dim);text-align:left}
+.settings-tab:hover{background:var(--bg3);color:var(--ink)}
+.settings-tab.active{background:var(--bg3);color:var(--ink);box-shadow:inset 2px 0 0 var(--accent)}
+.settings-content{padding:20px 22px;overflow-y:auto;min-height:0}
+.settings-section-title{font:600 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:4px 0 12px}
+.settings-group{margin-bottom:18px}
+.settings-group>label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
+.settings-group>input{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:11px;padding:11px 13px;font-size:14px;outline:none}
+.settings-group>input:focus{border-color:var(--accent)}
+.settings-group small{display:block;color:var(--faint);font-size:12px;margin-top:6px;line-height:1.5}
+.settings-row{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.settings-row>label{margin:0}
+.appearance-toggle{display:flex;background:var(--bg);border:1px solid var(--line2);border-radius:11px;padding:3px}
+.appearance-option{width:64px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--faint)}
+.appearance-option.active{background:var(--accent);color:var(--on-accent)}
+.settings-avatar-row{display:flex;gap:13px;align-items:center;background:var(--bg3);border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:18px}
+.settings-avatar{width:44px;height:44px;border-radius:13px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:18px}
+.settings-avatar-info{display:flex;flex-direction:column}
+.settings-avatar-info span{color:var(--faint);font-size:12px}
+.api-key-help{background:var(--bg3);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:10px}
+.api-key-help p{font-size:13px;color:var(--dim);margin-bottom:10px}
+.get-key-btn{display:inline-block;text-decoration:none}
+.get-key-btn:hover{text-decoration:none;filter:brightness(1.08)}
+.api-key-steps{margin:10px 0 0 18px;color:var(--faint);font-size:12.5px;display:grid;gap:3px}
+.api-key-steps code{font:500 11.5px var(--mono);background:var(--bg);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+.settings-buttons{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--line)}
+.memory-list{background:var(--bg3);border:1px solid var(--line);border-radius:12px;padding:6px;max-height:220px;overflow-y:auto;margin-bottom:10px}
+.memory-item{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;font-size:13px;color:var(--dim)}
+.memory-item:hover{background:var(--bg2)}
+.memory-item button{color:var(--faint)}
+.memory-item button:hover{color:var(--danger)}
+.memory-empty{color:var(--faint);font-size:12.5px;padding:10px}
+.privacy-item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--bg3)}
+.privacy-item strong{font-size:13px;display:block;margin-bottom:3px}
+.privacy-item p{font-size:12.5px;color:var(--dim);line-height:1.55}
+
+/* toasts */
+.toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+.toast{background:var(--bg3);border:1px solid var(--line2);box-shadow:var(--shadow);border-radius:12px;padding:11px 16px;font-size:13px;display:flex;gap:9px;align-items:center;animation:tIn .25s cubic-bezier(.2,.9,.3,1);max-width:min(440px,90vw)}
+.toast i{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.toast.warn i{background:var(--warn)}
+.toast.error i{background:var(--danger)}
+.toast.ok i{background:var(--ok)}
+.toast.out{opacity:0;transform:translateY(8px);transition:.3s}
+@keyframes tIn{from{opacity:0;transform:translateY(10px)}}
+
+/* responsive + motion */
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;inset:0 auto 0 0;width:280px;transform:translateX(-102%);transition:transform .28s cubic-bezier(.2,.9,.3,1);box-shadow:var(--shadow)}
+  .sidebar.open{transform:none}
+  #menu-btn{display:flex}
+  .settings-body{grid-template-columns:1fr}
+  .settings-nav{flex-direction:row;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}
+  .about-meta,.sugs{grid-template-columns:1fr}
+  .bubble{max-width:94%}
+  .msg-count{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
-  <div class="app">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="sidebar-header">
-        <img src="orex-logo.svg" alt="Orex AI" class="rex-logo-img" title="Orex AI">
-        <div class="brand-copy">
-          <div class="rex-title" id="rex-header-title">Orex AI</div>
-          <div class="rex-subtitle" id="rex-header-subtitle">Your AI companion</div>
-        </div>
-      </div>
+<div id="scrim"></div>
 
-      <div class="sidebar-section sidebar-section-chats">
-        <div class="sidebar-label">Chats</div>
-        <div id="chat-list" class="chat-list" role="list"></div>
-        <button id="new-chat-btn" class="sidebar-btn" title="Create a new chat"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg> New Chat</button>
-      </div>
-
-      <div class="sidebar-section sidebar-section-tools">
-        <div class="sidebar-label">Tools</div>
-        <button id="open-settings-btn" class="sidebar-btn" title="Open settings"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Settings</button>
-        <button id="about-btn" class="sidebar-btn" title="About Orex AI"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> About</button>
-        <button id="export-btn" class="sidebar-btn" title="Export all chats"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>
-        <button id="research-urls-btn" class="sidebar-btn" title="Research one or more website URLs"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Research URLs</button>
+<div class="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <svg class="logo" viewBox="0 0 48 48" role="img" aria-label="Orex AI logo">
+        <defs><linearGradient id="lgA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6cb8ff"/><stop offset="1" stop-color="#0078d7"/></linearGradient></defs>
+        <path d="M5 19.5C5 11.5 12.3 6 21 6s16 5.5 16 13.5S29.7 33 21 33c-1.9 0-3.8-.3-5.4-.8L8 35.5l1.7-5.6C6.8 27.4 5 23.7 5 19.5Z" fill="url(#lgA)"/>
+        <path d="M26 27.5c0-4.7 4.2-8 9-8s9 3.3 9 8-4.2 8-9 8c-1.1 0-2.2-.2-3.2-.5L27 37l1.3-4.2c-1.4-1.4-2.3-3.2-2.3-5.3Z" fill="#f2f7ff" stroke="#dceafd"/>
+        <circle cx="32" cy="27.5" r="1.3" fill="#4a6b8a"/><circle cx="35.5" cy="27.5" r="1.3" fill="#4a6b8a"/><circle cx="39" cy="27.5" r="1.3" fill="#4a6b8a"/>
+      </svg>
+      <div class="brand-copy">
+        <div class="rex-title" id="rex-header-title">Orex AI</div>
+        <div class="rex-subtitle" id="rex-header-subtitle">Your AI companion</div>
       </div>
     </div>
 
-    <!-- Main area -->
-    <div class="main">
-      <!-- Header -->
-      <div class="header">
-        <div class="status-wrap">
-          <span id="status" class="status-text">Ready</span>
-          <span class="msg-count">Messages: <span id="msg-count">0</span></span>
-        </div>
-        <div class="header-buttons">
-          <button id="clear-btn" class="header-btn" title="Clear chat history"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Clear</button>
-          <button id="theme-toggle" class="header-btn" title="Toggle dark mode" aria-label="Toggle theme">
-            <span class="theme-icon" aria-hidden="true"></span>
-          </button>
-        </div>
+    <div class="sidebar-section sidebar-section-chats">
+      <div class="sidebar-label">Chats</div>
+      <div id="chat-list" class="chat-list" role="list"></div>
+      <button id="new-chat-btn" class="sidebar-btn" title="Create a new chat"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg> New Chat</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Tools</div>
+      <button id="open-settings-btn" class="sidebar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</button>
+      <button id="about-btn" class="sidebar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> About</button>
+      <button id="export-btn" class="sidebar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>
+      <button id="research-urls-btn" class="sidebar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Research URLs</button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+    <div class="header">
+      <div class="status-wrap">
+        <button id="menu-btn" class="header-btn" title="Menu" aria-label="Open menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <span id="status">Ready</span>
+        <span class="msg-count">Messages: <span id="msg-count">0</span></span>
+      </div>
+      <div class="header-buttons">
+        <button id="clear-btn" class="header-btn" title="Clear chat history"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Clear</button>
+        <button id="theme-toggle" class="header-btn" title="Toggle dark mode" aria-label="Toggle theme">
+          <span class="theme-icon" aria-hidden="true">
+            <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+            <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-log" id="chat-log" role="log" aria-label="Chat messages" aria-live="polite"></div>
+
+    <div class="input-area">
+      <div id="attach-menu" class="menu hidden" role="menu" aria-label="Attachment options">
+        <button class="attach-item" id="attach-files-btn" role="menuitem">
+          <span class="attach-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span>
+          <span>Add images or files</span>
+        </button>
+        <button class="attach-item" id="attach-generate-btn" role="menuitem">
+          <span class="attach-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span>
+          <span>Generate image</span>
+        </button>
+        <button class="attach-item" id="attach-research-btn" role="menuitem">
+          <span class="attach-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span>
+          <span>Start deep research</span>
+        </button>
+        <button class="attach-item" id="attach-quiz-btn" role="menuitem">
+          <span class="attach-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></svg></span>
+          <span>Take a quiz</span>
+        </button>
+        <button class="attach-item" id="attach-wiki-btn" role="menuitem">
+          <span class="attach-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h22M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg></span>
+          <span>Look up on Wikipedia</span>
+        </button>
+        <button class="attach-item" id="attach-dict-btn" role="menuitem">
+          <span class="attach-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M9 7h6"/></svg></span>
+          <span>Look up a word</span>
+        </button>
       </div>
 
-      <!-- Chat log -->
-      <div class="chat-log" role="log" aria-label="Chat messages" aria-live="polite"></div>
-
-      <!-- Input area -->
-      <div class="input-area">
-        <div id="attach-menu" class="attach-menu hidden" role="menu" aria-label="Attachment options">
-          <button class="attach-item" id="attach-files-btn" role="menuitem">
-            <span class="attach-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></span>
-            <span>Add images or files</span>
-          </button>
-          <button class="attach-item" id="attach-generate-btn" role="menuitem">
-            <span class="attach-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span>
-            <span>Generate image</span>
-          </button>
-          <button class="attach-item" id="attach-research-btn" role="menuitem">
-            <span class="attach-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg></span>
-            <span>Start deep research</span>
-          </button>
-          <button class="attach-item" id="attach-quiz-btn" role="menuitem">
-            <span class="attach-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
-            <span>Take a quiz</span>
-          </button>
-          <button class="attach-item" id="attach-wiki-btn" role="menuitem">
-            <span class="attach-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg></span>
-            <span>Look up on Wikipedia</span>
-          </button>
-          <button class="attach-item" id="attach-dict-btn" role="menuitem">
-            <span class="attach-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M9 7h6"/><path d="M9 11h4"/></svg></span>
-            <span>Look up a word</span>
-          </button>
-        </div>
-
-        <div id="mode-menu" class="mode-menu hidden" role="menu" aria-label="Response mode options">
-          <button type="button" class="mode-item" data-mode="smart" role="menuitem">
-            <span class="mode-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
-            <span class="mode-text"><strong>Smart</strong><small>Balanced — casual or sharp depending on the question</small></span>
-          </button>
-          <button type="button" class="mode-item" data-mode="casual" role="menuitem">
-            <span class="mode-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
-            <span class="mode-text"><strong>Casual</strong><small>Short, relaxed replies — no long paragraphs</small></span>
-          </button>
-          <button type="button" class="mode-item" data-mode="coder" role="menuitem">
-            <span class="mode-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
-            <span class="mode-text"><strong>Coder</strong><small>Technical and precise, leads with code</small></span>
-          </button>
-          <button type="button" class="mode-item" data-mode="teacher" role="menuitem">
-            <span class="mode-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg></span>
-            <span class="mode-text"><strong>Teacher</strong><small>In-depth and advanced — like Smart, taken further</small></span>
-          </button>
-        </div>
-
-        <form id="chat-form" class="input-bar">
-          <button type="button" id="mode-btn" class="mode-btn" title="Response mode" aria-label="Choose response mode" aria-haspopup="true" aria-expanded="false" aria-controls="mode-menu">
-            <span id="mode-btn-label">Smart</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <button type="button" id="attach-btn" class="attach-btn" title="Attachments & more" aria-label="Attachments and more" aria-expanded="false" aria-controls="attach-menu">+</button>
-          <textarea id="user-input" placeholder="Talk to Orex..." rows="1" aria-label="Message input"></textarea>
-          <button type="submit" class="send-btn" title="Send message (Shift+Enter for new line)">Send</button>
-        </form>
+      <div id="mode-menu" class="menu mode-menu hidden" role="menu" aria-label="Response mode options">
+        <button type="button" class="mode-item" data-mode="smart" role="menuitem">
+          <span class="mode-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg></span>
+          <span class="mode-text"><strong>Smart</strong><small>Balanced — casual or sharp depending on the question</small></span>
+        </button>
+        <button type="button" class="mode-item" data-mode="casual" role="menuitem">
+          <span class="mode-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+          <span class="mode-text"><strong>Casual</strong><small>Short, relaxed replies — no long paragraphs</small></span>
+        </button>
+        <button type="button" class="mode-item" data-mode="coder" role="menuitem">
+          <span class="mode-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+          <span class="mode-text"><strong>Coder</strong><small>Technical and precise, leads with code</small></span>
+        </button>
+        <button type="button" class="mode-item" data-mode="teacher" role="menuitem">
+          <span class="mode-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/></svg></span>
+          <span class="mode-text"><strong>Teacher</strong><small>In-depth and advanced — like Smart, taken further</small></span>
+        </button>
       </div>
 
-      <input type="file" id="image-input" accept="image/*" style="display:none;">
-      <input type="file" id="file-input" accept="image/*,*/*" style="display:none;">
+      <div id="previews" class="previews"></div>
+
+      <form id="chat-form" class="input-bar">
+        <button type="button" id="mode-btn" class="mode-btn" title="Response mode" aria-haspopup="true" aria-expanded="false" aria-controls="mode-menu">
+          <span id="mode-btn-label">Smart</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button type="button" id="attach-btn" class="attach-btn" title="Attachments & more" aria-label="Attachments and more" aria-expanded="false" aria-controls="attach-menu">+</button>
+        <textarea id="user-input" placeholder="Talk to Orex..." rows="1" aria-label="Message input"></textarea>
+        <button type="submit" id="send-btn" class="send-btn" title="Send message (Enter)">Send</button>
+      </form>
+    </div>
+
+    <input type="file" id="image-input" accept="image/*" multiple style="display:none;">
+    <input type="file" id="file-input" accept="*/*" multiple style="display:none;">
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+<div id="popup-overlay" class="overlay" role="presentation">
+  <div class="popup" role="dialog" aria-labelledby="popup-title">
+    <h2 id="popup-title">Name your chat</h2>
+    <input id="new-chat-name" type="text" placeholder="Orex Advice" maxlength="50">
+    <label class="checkbox-label">
+      <input type="checkbox" id="temp-chat-checkbox">
+      <span>Temporary chat <span class="temp-hint">(not saved after page close)</span></span>
+    </label>
+    <div class="popup-buttons">
+      <button id="create-chat-btn" class="btn-primary">Create Chat</button>
+      <button id="cancel-chat-btn" class="btn-secondary">Cancel</button>
     </div>
   </div>
+</div>
 
-  <!-- New chat popup -->
-  <div id="popup-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="new-chat-popup" class="popup" role="dialog" aria-labelledby="popup-title">
-      <h2 id="popup-title">Name your chat</h2>
-      <input id="new-chat-name" type="text" placeholder="Orex Advice" maxlength="50">
-      <label class="checkbox-label">
-        <input type="checkbox" id="temp-chat-checkbox">
-        <span>Temporary chat <span class="temp-hint">(not saved after page close)</span></span>
-      </label>
-      <div class="popup-buttons">
-        <button id="create-chat-btn" class="btn-primary">Create Chat</button>
-        <button id="cancel-chat-btn" class="btn-secondary">Cancel</button>
-      </div>
+<div id="confirm-overlay" class="overlay" role="presentation">
+  <div class="popup" role="dialog" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Confirm Action</h2>
+    <p id="confirm-message"></p>
+    <div class="popup-buttons">
+      <button id="confirm-yes" class="btn-danger">Delete</button>
+      <button id="confirm-no" class="btn-secondary">Cancel</button>
     </div>
   </div>
+</div>
 
-  <!-- Confirmation modal -->
-  <div id="confirm-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="confirm-modal" class="popup" role="dialog" aria-labelledby="confirm-title">
-      <h2 id="confirm-title">Confirm Action</h2>
-      <p id="confirm-message"></p>
-      <div class="popup-buttons">
-        <button id="confirm-yes" class="btn-danger">Delete</button>
-        <button id="confirm-no" class="btn-secondary">Cancel</button>
+<div id="about-overlay" class="overlay" role="presentation">
+  <div class="popup" role="dialog" aria-modal="true" aria-labelledby="about-title">
+    <div class="about-head">
+      <svg class="about-logo" viewBox="0 0 48 48" role="img" aria-label="Orex AI logo">
+        <defs><linearGradient id="lgB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6cb8ff"/><stop offset="1" stop-color="#0078d7"/></linearGradient></defs>
+        <path d="M5 19.5C5 11.5 12.3 6 21 6s16 5.5 16 13.5S29.7 33 21 33c-1.9 0-3.8-.3-5.4-.8L8 35.5l1.7-5.6C6.8 27.4 5 23.7 5 19.5Z" fill="url(#lgB)"/>
+        <path d="M26 27.5c0-4.7 4.2-8 9-8s9 3.3 9 8-4.2 8-9 8c-1.1 0-2.2-.2-3.2-.5L27 37l1.3-4.2c-1.4-1.4-2.3-3.2-2.3-5.3Z" fill="#f2f7ff" stroke="#dceafd"/>
+        <circle cx="32" cy="27.5" r="1.3" fill="#4a6b8a"/><circle cx="35.5" cy="27.5" r="1.3" fill="#4a6b8a"/><circle cx="39" cy="27.5" r="1.3" fill="#4a6b8a"/>
+      </svg>
+      <div>
+        <p class="about-eyebrow">About Orex</p>
+        <h2 id="about-title">Orex AI</h2>
       </div>
     </div>
-  </div>
-
-    <!-- About modal -->
-  <div id="about-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="about-modal" class="popup about-popup" role="dialog" aria-modal="true" aria-labelledby="about-title" style="max-height: 85vh; overflow-y: auto;">
-      <div class="about-head">
-        <img src="orex-logo.svg" alt="Orex AI logo" class="about-logo">
-        <div>
-          <p class="about-eyebrow">About Orex</p>
-          <h2 id="about-title">Orex AI</h2>
-        </div>
-      </div>
-      <p class="about-copy">
-        Orex AI is a focused AI workspace with a polished glassy interface, fast Groq-powered replies,
-        vision support for images, and richer file context for text, JSON, and code uploads.
-      </p>
-
-      <div class="about-section">
-        <h3>Features</h3>
-        <ul class="feature-list">
-          <li>Vision support — Orex can see and discuss images you upload</li>
-          <li>Temporary chats — session-only, never saved to localStorage</li>
-          <li>Double-click any chat name to rename it inline</li>
-          <li>Settings modal with General, Memory, and Privacy tabs</li>
-          <li>Attach menu — files, research, quizzes, Wikipedia, dictionary</li>
-          <li>Research URLs — paste website links for Orex to visit and summarize</li>
-          <li>Wikipedia lookup — pull a real article summary into the chat</li>
-          <li>Dictionary lookup — real definitions, straight from the source</li>
-          <li>Multi-chat management with export (confirmation required) and delete</li>
-          <li>Groq-powered conversations with persistent local history</li>
-          <li>Rich markdown rendering + syntax-highlighted code blocks with copy buttons</li>
-          <li>Improved image prompt helper & research tools</li>
-        </ul>
-      </div>
-
-      <div class="about-meta">
-        <div class="about-card">
-          <span class="about-label">Version</span>
-          <strong>v1.4</strong>
-        </div>
-        <div class="about-card">
-          <span class="about-label">AI Knowledge</span>
-          <strong>~2025 + live search</strong>
-        </div>
-        <div class="about-card">
-          <span class="about-label">Credits</span>
-          <strong>Groq API · Phillip Jones IV</strong>
-        </div>
-      </div>
-      <p class="about-fineprint">Model training data is roughly current through 2025 (exact cutoff isn't published by Groq). For anything more recent, Orex automatically searches the live web instead of guessing.</p>
-
-      <div class="popup-buttons">
-        <button id="close-about-btn" class="btn-primary">Close</button>
-      </div>
+    <p class="about-copy">
+      Orex AI is a focused AI workspace with a polished glassy interface, fast Groq-powered streaming replies,
+      vision support for images, file context, and a suite of research tools — all running client-side in a single file.
+    </p>
+    <div class="about-section">
+      <h3>Features</h3>
+      <ul class="feature-list">
+        <li>Streaming responses with a Stop button and regenerate</li>
+        <li>Vision support — Orex can see and discuss images you upload</li>
+        <li>Text &amp; code file attachments read straight into context</li>
+        <li>Temporary chats — session-only, never saved to localStorage</li>
+        <li>Double-click any chat name to rename it inline</li>
+        <li>Memory — Orex quietly learns facts about you across chats</li>
+        <li>Research URLs, Wikipedia lookup, dictionary, quizzes</li>
+        <li>Image generation, markdown + syntax-highlighted code with copy buttons</li>
+        <li>Multi-chat management with JSON export and light/dark themes</li>
+      </ul>
+    </div>
+    <div class="about-meta">
+      <div class="about-card"><span class="about-label">Version</span><strong>v1.5</strong></div>
+      <div class="about-card"><span class="about-label">Knowledge</span><strong>~2025 + live tools</strong></div>
+      <div class="about-card"><span class="about-label">Credits</span><strong>Groq API · Phillip Jones IV</strong></div>
+    </div>
+    <p class="about-fineprint">Model training data is roughly current through 2025 (Groq doesn't publish exact cutoffs). For anything more recent, use Research URLs or Wikipedia lookup instead of guessing.</p>
+    <div class="popup-buttons">
+      <button id="close-about-btn" class="btn-primary" data-close>Close</button>
     </div>
   </div>
+</div>
 
-  <!-- Research URLs modal -->
-  <div id="research-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="research-modal" class="popup" role="dialog" aria-labelledby="research-title">
-      <h2 id="research-title">🔎 Research URLs</h2>
-      <p>Paste one or more website URLs (one per line) and Orex will fetch what it can and put together a research summary.</p>
-      <textarea id="research-urls-input" placeholder="https://example.com/article
-https://example.com/another-page" rows="5" maxlength="4000"></textarea>
-      <input id="research-focus" type="text" placeholder="Optional: what should Orex focus on?" maxlength="200">
-      <div class="popup-buttons">
-        <button id="research-start-btn" class="btn-primary">Research</button>
-        <button id="research-cancel-btn" class="btn-secondary">Cancel</button>
-      </div>
+<div id="research-overlay" class="overlay" role="presentation">
+  <div class="popup" role="dialog" aria-labelledby="research-title">
+    <h2 id="research-title">Research URLs</h2>
+    <p>Paste one or more website URLs (one per line, max 5) and Orex will fetch what it can and write a research brief.</p>
+    <textarea id="research-urls-input" placeholder="https://example.com/article&#10;https://example.com/another-page" rows="5" maxlength="4000"></textarea>
+    <input id="research-focus" type="text" placeholder="Optional: what should Orex focus on?" maxlength="200">
+    <div class="popup-buttons">
+      <button id="research-start-btn" class="btn-primary">Research</button>
+      <button id="research-cancel-btn" class="btn-secondary" data-close>Cancel</button>
     </div>
   </div>
+</div>
 
-  <!-- Quiz modal -->
-  <div id="quiz-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="quiz-modal" class="popup" role="dialog" aria-labelledby="quiz-title">
-      <h2 id="quiz-title">📝 Take a Quiz</h2>
-      <p>What topic would you like to be quizzed on?</p>
-      <input id="quiz-topic" type="text" placeholder="e.g. World History" maxlength="120">
-      <div class="popup-buttons">
-        <button id="quiz-start-btn" class="btn-primary">Start Quiz</button>
-        <button id="quiz-cancel-btn" class="btn-secondary">Cancel</button>
-      </div>
+<div id="quiz-overlay" class="overlay" role="presentation">
+  <div class="popup" role="dialog" aria-labelledby="quiz-title">
+    <h2 id="quiz-title">Take a Quiz</h2>
+    <p>What topic would you like to be quizzed on? You'll get 5 questions, one at a time, with scoring.</p>
+    <input id="quiz-topic" type="text" placeholder="e.g. World History" maxlength="120">
+    <div class="popup-buttons">
+      <button id="quiz-start-btn" class="btn-primary">Start Quiz</button>
+      <button id="quiz-cancel-btn" class="btn-secondary" data-close>Cancel</button>
     </div>
   </div>
+</div>
 
-  <!-- Wikipedia lookup modal -->
-  <div id="wiki-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="wiki-modal" class="popup" role="dialog" aria-labelledby="wiki-title">
-      <h2 id="wiki-title">🌐 Look up on Wikipedia</h2>
-      <p>What topic should Orex pull the real Wikipedia article for?</p>
-      <input id="wiki-topic" type="text" placeholder="e.g. Photosynthesis" maxlength="150">
-      <div class="popup-buttons">
-        <button id="wiki-start-btn" class="btn-primary">Look Up</button>
-        <button id="wiki-cancel-btn" class="btn-secondary">Cancel</button>
-      </div>
+<div id="wiki-overlay" class="overlay" role="presentation">
+  <div class="popup" role="dialog" aria-labelledby="wiki-title">
+    <h2 id="wiki-title">Look up on Wikipedia</h2>
+    <p>Orex will pull the real Wikipedia summary for a topic.</p>
+    <input id="wiki-topic" type="text" placeholder="e.g. Photosynthesis" maxlength="150">
+    <div class="popup-buttons">
+      <button id="wiki-start-btn" class="btn-primary">Look Up</button>
+      <button id="wiki-cancel-btn" class="btn-secondary" data-close>Cancel</button>
     </div>
   </div>
+</div>
 
-  <!-- Dictionary lookup modal -->
-  <div id="dict-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="dict-modal" class="popup" role="dialog" aria-labelledby="dict-title">
-      <h2 id="dict-title">📖 Look up a word</h2>
-      <p>What word should Orex define?</p>
-      <input id="dict-word" type="text" placeholder="e.g. Ephemeral" maxlength="60">
-      <div class="popup-buttons">
-        <button id="dict-start-btn" class="btn-primary">Define</button>
-        <button id="dict-cancel-btn" class="btn-secondary">Cancel</button>
-      </div>
+<div id="dict-overlay" class="overlay" role="presentation">
+  <div class="popup" role="dialog" aria-labelledby="dict-title">
+    <h2 id="dict-title">Look up a word</h2>
+    <p>Orex will fetch a real dictionary definition.</p>
+    <input id="dict-word" type="text" placeholder="e.g. Ephemeral" maxlength="60">
+    <div class="popup-buttons">
+      <button id="dict-start-btn" class="btn-primary">Define</button>
+      <button id="dict-cancel-btn" class="btn-secondary" data-close>Cancel</button>
     </div>
   </div>
+</div>
 
-  <!-- Settings modal -->
-  <div id="settings-overlay" class="popup-overlay hidden" role="presentation">
-    <div id="settings-modal" class="popup settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
-      <div class="settings-header">
-        <h2 id="settings-modal-title">Settings</h2>
-        <button id="close-settings-x" class="settings-close-x" type="button" aria-label="Close settings">✕</button>
+<div id="settings-overlay" class="overlay" role="presentation">
+  <div class="popup settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+    <div class="settings-header">
+      <h2 id="settings-modal-title">Settings</h2>
+      <button id="close-settings-x" class="settings-close-x" type="button" aria-label="Close settings">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="settings-nav" role="tablist" aria-label="Settings sections">
+        <button class="settings-tab active" data-tab="general" role="tab" aria-selected="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+          <span>General</span>
+        </button>
+        <button class="settings-tab" data-tab="memory" role="tab" aria-selected="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.5A2.5 2.5 0 0 1 4.5 17a2.5 2.5 0 0 1-1.5-4.5A2.5 2.5 0 0 1 4.5 8a2.5 2.5 0 0 1 2-4A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.5A2.5 2.5 0 0 0 19.5 17a2.5 2.5 0 0 0 1.5-4.5A2.5 2.5 0 0 0 19.5 8a2.5 2.5 0 0 0-2-4A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+          <span>Memory</span>
+        </button>
+        <button class="settings-tab" data-tab="privacy" role="tab" aria-selected="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+          <span>Privacy</span>
+        </button>
       </div>
 
-      <div class="settings-body">
-        <div class="settings-nav" role="tablist" aria-label="Settings sections">
-          <button class="settings-tab active" data-tab="general" role="tab" aria-selected="true">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>General</span>
-          </button>
-          <button class="settings-tab" data-tab="memory" role="tab" aria-selected="false">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.5A2.5 2.5 0 0 1 4.5 17a2.5 2.5 0 0 1-1.5-4.5A2.5 2.5 0 0 1 4.5 8a2.5 2.5 0 0 1 2-4A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.5A2.5 2.5 0 0 0 19.5 17a2.5 2.5 0 0 0 1.5-4.5A2.5 2.5 0 0 0 19.5 8a2.5 2.5 0 0 0-2-4A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-            <span>Memory</span>
-          </button>
-          <button class="settings-tab" data-tab="privacy" role="tab" aria-selected="false">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-            <span>Privacy</span>
-          </button>
-        </div>
-
-        <div class="settings-content">
-          <div id="settings-tab-general" class="settings-tab-content" role="tabpanel">
-            <div class="settings-section-title">Profile</div>
-            <div class="settings-avatar-row">
-              <div class="settings-avatar" id="settings-avatar">R</div>
-              <div class="settings-avatar-info">
-                <strong id="settings-avatar-name">Orex</strong>
-                <span>Your personal AI chat</span>
-              </div>
-            </div>
-
-            <div class="settings-group">
-              <label for="rex-name">Orex's Name</label>
-              <input id="rex-name" type="text" placeholder="Orex" maxlength="30">
-            </div>
-            <div class="settings-group">
-              <label for="user-name">Your Name</label>
-              <input id="user-name" type="text" placeholder="You" maxlength="30">
-            </div>
-            <div class="settings-group">
-              <label for="api-key-input">Groq API Key</label>
-              <div class="api-key-help">
-                <p>Orex needs a free Groq API key to talk to the AI. It's free, no credit card, and takes about 30 seconds.</p>
-                <a id="get-api-key-link" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="btn-primary get-key-btn">Get a free API key ↗</a>
-                <ol class="api-key-steps">
-                  <li>Click the button above (opens Groq in a new tab)</li>
-                  <li>Sign up with just an email — no card needed</li>
-                  <li>Click <strong>"Create API Key"</strong>, name it anything</li>
-                  <li>Copy the key — it starts with <code>gsk_</code></li>
-                  <li>Paste it below</li>
-                </ol>
-              </div>
-              <input id="api-key-input" type="password" placeholder="Paste your gsk_... key here">
-              <small>Your key is stored locally in your browser only — Orex never sends it anywhere but Groq.</small>
-            </div>
-
-            <div class="settings-section-title">Preferences</div>
-            <div class="settings-group settings-row">
-              <label>Appearance</label>
-              <div class="appearance-toggle" id="appearance-toggle" role="group" aria-label="Appearance">
-                <button type="button" class="appearance-option" data-theme="light" aria-label="Light mode">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-                </button>
-                <button type="button" class="appearance-option" data-theme="dark" aria-label="Dark mode">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-                </button>
-              </div>
+      <div class="settings-content">
+        <div id="settings-tab-general" class="settings-tab-content" role="tabpanel">
+          <div class="settings-section-title">Profile</div>
+          <div class="settings-avatar-row">
+            <div class="settings-avatar" id="settings-avatar">O</div>
+            <div class="settings-avatar-info">
+              <strong id="settings-avatar-name">Orex</strong>
+              <span>Your personal AI chat</span>
             </div>
           </div>
-
-          <div id="settings-tab-memory" class="settings-tab-content hidden" role="tabpanel">
-            <div class="settings-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="memory-enabled-checkbox" checked>
-                Let Orex remember things about you across chats
-              </label>
-              <small>When on, Orex quietly picks up on useful facts (your name, preferences, ongoing projects, etc.) and reuses them in future conversations — even brand new ones.</small>
-            </div>
-            <div class="settings-group">
-              <label>What Orex remembers</label>
-              <div id="memory-list" class="memory-list">
-                <p class="memory-empty">Nothing yet — Orex will pick things up as you chat.</p>
-              </div>
-              <button id="memory-clear-btn" class="btn-secondary memory-clear-btn" type="button">Clear all memory</button>
-            </div>
+          <div class="settings-group">
+            <label for="rex-name">Orex's Name</label>
+            <input id="rex-name" type="text" placeholder="Orex" maxlength="30">
           </div>
-
-          <div id="settings-tab-privacy" class="settings-tab-content hidden" role="tabpanel">
-            <div class="privacy-section">
-              <div class="privacy-item">
-                <strong>Your API Key</strong>
-                <p>Your Groq API key is saved only in your browser's localStorage. It is never sent anywhere except directly to Groq's official API when you send a message.</p>
-              </div>
-              <div class="privacy-item">
-                <strong>Chat History</strong>
-                <p>All conversations are stored locally on your device. Orex AI has no backend server or database — your chats never leave your browser (except when sent to Groq for AI responses).</p>
-              </div>
-              <div class="privacy-item">
-                <strong>Memory</strong>
-                <p>If enabled, Orex saves short facts it picks up from your chats (locally, in your browser only) and reuses them in future conversations. You can review or delete them anytime in the Memory tab, or turn the feature off entirely.</p>
-              </div>
-              <div class="privacy-item">
-                <strong>No Tracking</strong>
-                <p>Orex AI does not use analytics, cookies, or any third-party tracking. No personal data is collected or transmitted by Orex AI itself.</p>
-              </div>
-              <div class="privacy-item">
-                <strong>Groq's Policy</strong>
-                <p>Messages you send are processed by Groq's API. Review <a href="https://groq.com/privacy" target="_blank" rel="noopener noreferrer">Groq's Privacy Policy</a> for details on how they handle your data.</p>
-              </div>
-              <div class="privacy-item">
-                <strong>Temporary Chats</strong>
-                <p>Chats marked as temporary are kept in memory only for the current session and are automatically removed when you close or refresh the page.</p>
-              </div>
+          <div class="settings-group">
+            <label for="user-name">Your Name</label>
+            <input id="user-name" type="text" placeholder="You" maxlength="30">
+          </div>
+          <div class="settings-group">
+            <label for="api-key-input">Groq API Key</label>
+            <div class="api-key-help">
+              <p>Orex needs a free Groq API key to talk to the AI. It's free, no credit card, and takes about 30 seconds.</p>
+              <a id="get-api-key-link" href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" class="btn-primary get-key-btn">Get a free API key ↗</a>
+              <ol class="api-key-steps">
+                <li>Click the button above (opens Groq in a new tab)</li>
+                <li>Sign up with just an email — no card needed</li>
+                <li>Click <strong>"Create API Key"</strong>, name it anything</li>
+                <li>Copy the key — it starts with <code>gsk_</code></li>
+                <li>Paste it below</li>
+              </ol>
+            </div>
+            <input id="api-key-input" type="password" placeholder="Paste your gsk_... key here">
+            <small>Your key is stored locally in your browser only — Orex never sends it anywhere but Groq.</small>
+          </div>
+          <div class="settings-section-title">Preferences</div>
+          <div class="settings-group settings-row">
+            <label>Appearance</label>
+            <div class="appearance-toggle" role="group" aria-label="Appearance">
+              <button type="button" class="appearance-option" data-theme="light" aria-label="Light mode">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+              </button>
+              <button type="button" class="appearance-option" data-theme="dark" aria-label="Dark mode">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="settings-buttons">
-        <button id="save-settings" class="btn-primary">Save</button>
-        <button id="close-settings" class="btn-secondary">Close</button>
+        <div id="settings-tab-memory" class="settings-tab-content hidden" role="tabpanel">
+          <div class="settings-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="memory-enabled-checkbox" checked>
+              Let Orex remember things about you across chats
+            </label>
+            <small>When on, Orex quietly picks up useful facts (your name, preferences, ongoing projects) and reuses them in future conversations — even brand new ones.</small>
+          </div>
+          <div class="settings-group">
+            <label>What Orex remembers</label>
+            <div id="memory-list" class="memory-list">
+              <p class="memory-empty">Nothing yet — Orex will pick things up as you chat.</p>
+            </div>
+            <button id="memory-clear-btn" class="btn-secondary" type="button">Clear all memory</button>
+          </div>
+        </div>
+
+        <div id="settings-tab-privacy" class="settings-tab-content hidden" role="tabpanel">
+          <div class="privacy-item"><strong>Your API Key</strong><p>Saved only in your browser's localStorage. It is never sent anywhere except directly to Groq's official API when you send a message.</p></div>
+          <div class="privacy-item"><strong>Chat History</strong><p>All conversations are stored locally on your device. Orex AI has no backend server or database — your chats never leave your browser (except when sent to Groq for responses).</p></div>
+          <div class="privacy-item"><strong>Memory</strong><p>If enabled, Orex saves short facts it picks up from your chats (locally, in your browser only) and reuses them later. Review or delete them anytime in the Memory tab, or turn the feature off.</p></div>
+          <div class="privacy-item"><strong>No Tracking</strong><p>Orex AI does not use analytics, cookies, or any third-party tracking. No personal data is collected or transmitted by Orex AI itself.</p></div>
+          <div class="privacy-item"><strong>Groq's Policy</strong><p>Messages you send are processed by Groq's API. Review <a href="https://groq.com/privacy" target="_blank" rel="noopener noreferrer">Groq's Privacy Policy</a> for details.</p></div>
+          <div class="privacy-item"><strong>Temporary Chats</strong><p>Chats marked as temporary are kept in memory only for the current session and are removed when you close or refresh the page.</p></div>
+        </div>
       </div>
     </div>
+    <div class="settings-buttons">
+      <button id="save-settings" class="btn-primary">Save</button>
+      <button id="close-settings" class="btn-secondary" data-close>Close</button>
+    </div>
   </div>
+</div>
 
-  <script src="rex.js"></script>
+<div class="toasts" id="toasts"></div>
+
+<script>
+(()=>{'use strict';
+/* ================= helpers ================= */
+const $=(s,c=document)=>c.querySelector(s);
+const $$=(s,c=document)=>[...c.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const fmtTime=ts=>new Date(ts||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const load=(k,f)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??f}catch(_){return f}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(_){toast('Storage is full — export & delete old chats','warn')}};
+
+/* ================= config — update model ids here if Groq rotates them ================= */
+const CFG={
+  base:'https://api.groq.com/openai/v1',
+  model:'llama-3.3-70b-versatile',                    // main chat
+  fast:'llama-3.1-8b-instant',                        // memory extraction
+  vision:'meta-llama/llama-4-scout-17b-16e-instruct', // when images are attached
+};
+const MODES={
+  smart:{label:'Smart',temp:.7},
+  casual:{label:'Casual',temp:.8},
+  coder:{label:'Coder',temp:.25},
+  teacher:{label:'Teacher',temp:.6},
+};
+const LOGO='<defs><linearGradient id="lgC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6cb8ff"/><stop offset="1" stop-color="#0078d7"/></linearGradient></defs><path d="M5 19.5C5 11.5 12.3 6 21 6s16 5.5 16 13.5S29.7 33 21 33c-1.9 0-3.8-.3-5.4-.8L8 35.5l1.7-5.6C6.8 27.4 5 23.7 5 19.5Z" fill="url(#lgC)"/><path d="M26 27.5c0-4.7 4.2-8 9-8s9 3.3 9 8-4.2 8-9 8c-1.1 0-2.2-.2-3.2-.5L27 37l1.3-4.2c-1.4-1.4-2.3-3.2-2.3-5.3Z" fill="#f2f7ff" stroke="#dceafd"/><circle cx="32" cy="27.5" r="1.3" fill="#4a6b8a"/><circle cx="35.5" cy="27.5" r="1.3" fill="#4a6b8a"/><circle cx="39" cy="27.5" r="1.3" fill="#4a6b8a"/>';
+const AVATAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+
+/* ================= state ================= */
+let chats=load('orex.chats',[]);
+let memory=load('orex.memory',[]);
+let settings=Object.assign({apiKey:'',rexName:'Orex',userName:'',theme:'dark',mode:'smart',memoryOn:true},load('orex.settings',{}));
+let activeId=load('orex.active',null);
+let pendingImages=[],pendingFiles=[],pendingTool=null;
+let streaming=false,controller=null,userMsgTicks=0,stick=true;
+if(!MODES[settings.mode])settings.mode='smart';
+if(activeId&&!chats.some(c=>c.id===activeId))activeId=chats[0]?.id||null;
+
+const log=$('#chat-log'),input=$('#user-input');
+
+/* ================= toasts ================= */
+function toast(msg,type=''){
+  const t=document.createElement('div');t.className='toast '+type;
+  t.innerHTML='<i></i><span></span>';t.lastChild.textContent=msg;
+  $('#toasts').appendChild(t);
+  setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),320)},3200);
+}
+
+/* ================= modals ================= */
+function openModal(id){$('#'+id).classList.add('show')}
+function closeModal(id){$('#'+id).classList.remove('show')}
+function closeAllModals(){
+  if(confirmCb){const cb=confirmCb;confirmCb=null;cb(false)}
+  $$('.overlay.show').forEach(o=>o.classList.remove('show'));
+}
+ $$('.overlay').forEach(ov=>ov.addEventListener('click',e=>{
+  if(e.target!==ov)return;
+  ov.classList.remove('show');
+  if(ov.id==='confirm-overlay'&&confirmCb){const cb=confirmCb;confirmCb=null;cb(false)}
+}));
+ $$('[data-close]').forEach(b=>b.addEventListener('click',()=>b.closest('.overlay').classList.remove('show')));
+
+let confirmCb=null;
+function askConfirm(title,msg,okLabel='Delete',danger=true){
+  return new Promise(res=>{
+    $('#confirm-title').textContent=title;
+    $('#confirm-message').textContent=msg;
+    const y=$('#confirm-yes');
+    y.textContent=okLabel;
+    y.classList.toggle('btn-danger',danger);
+    y.classList.toggle('btn-primary',!danger);
+    confirmCb=ok=>{closeModal('confirm-overlay');confirmCb=null;res(ok)};
+    openModal('confirm-overlay');
+  });
+}
+ $('#confirm-yes').addEventListener('click',()=>confirmCb&&confirmCb(true));
+ $('#confirm-no').addEventListener('click',()=>confirmCb&&confirmCb(false));
+
+/* ================= persistence ================= */
+const persistChats=()=>save('orex.chats',chats.filter(c=>!c.temp));
+const persistSettings=()=>save('orex.settings',settings);
+const persistMemory=()=>save('orex.memory',memory);
+const persistActive=()=>save('orex.active',chats.some(c=>c.id===activeId&&!c.temp)?activeId:null);
+
+/* ================= chrome ================= */
+function applyTheme(){document.documentElement.dataset.theme=settings.theme}
+function applyBrand(){
+  $('#rex-header-title').textContent=settings.rexName||'Orex';
+  $('#rex-header-subtitle').textContent=settings.userName?`for ${settings.userName}`:'Your AI companion';
+  $('#settings-avatar').textContent=(settings.rexName||'O')[0].toUpperCase();
+  $('#settings-avatar-name').textContent=settings.rexName||'Orex';
+  document.title=(settings.rexName||'Orex')+' AI';
+}
+function setStatus(t,cls=''){const s=$('#status');s.textContent=t;s.className=cls}
+function updateCount(){const c=activeChat();$('#msg-count').textContent=c?c.messages.length:0}
+
+/* ================= chats ================= */
+function activeChat(){return chats.find(c=>c.id===activeId)}
+function createChat(name,temp){
+  const c={id:uid(),name:name||'New chat',temp:!!temp,created:Date.now(),messages:[]};
+  chats.push(c);activeId=c.id;
+  persistChats();persistActive();
+  renderChatList();renderMessages();updateCount();
+  return c;
+}
+function renderChatList(){
+  const list=$('#chat-list');list.innerHTML='';
+  const shown=[...chats].sort((a,b)=>b.created-a.created);
+  if(!shown.length){list.innerHTML='<div class="chat-empty">No chats yet — create one below.</div>';return}
+  for(const c of shown){
+    const row=document.createElement('div');
+    row.className='chat-item'+(c.id===activeId?' active':'');
+    row.dataset.id=c.id;row.setAttribute('role','listitem');
+    row.innerHTML=`<span class="chat-name"></span>${c.temp?'<span class="badge-temp">temp</span>':''}<button class="chat-del" title="Delete chat" aria-label="Delete chat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`;
+    row.querySelector('.chat-name').textContent=c.name;
+    list.appendChild(row);
+  }
+}
+function closeSidebarMobile(){$('#sidebar').classList.remove('open');$('#scrim').classList.remove('show')}
+
+ $('#chat-list').addEventListener('click',e=>{
+  const del=e.target.closest('.chat-del');
+  const row=e.target.closest('.chat-item');if(!row)return;
+  const chat=chats.find(c=>c.id===row.dataset.id);if(!chat)return;
+  if(del){deleteChat(chat);return}
+  if(streaming)stopStream();
+  activeId=chat.id;persistActive();
+  renderChatList();renderMessages();updateCount();
+  closeSidebarMobile();
+});
+ $('#chat-list').addEventListener('dblclick',e=>{
+  const nameEl=e.target.closest('.chat-name');if(!nameEl)return;
+  const row=nameEl.closest('.chat-item');
+  const chat=chats.find(c=>c.id===row.dataset.id);if(!chat)return;
+  startRename(row,chat,nameEl);
+});
+function startRename(row,chat,nameEl){
+  const inp=document.createElement('input');
+  inp.className='rename';inp.maxLength=50;inp.value=chat.name;
+  nameEl.replaceWith(inp);inp.focus();inp.select();
+  let done=false;
+  const finish=ok=>{
+    if(done)return;done=true;
+    const v=inp.value.trim();
+    if(ok&&v){chat.name=v;persistChats()}
+    renderChatList();
+  };
+  inp.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter')finish(true);
+    else if(ev.key==='Escape')finish(false);
+  });
+  inp.addEventListener('blur',()=>finish(true));
+}
+async function deleteChat(chat){
+  if(!await askConfirm('Delete chat?',`"${chat.name}" and its ${chat.messages.length} messages will be gone for good.`))return;
+  chats=chats.filter(c=>c.id!==chat.id);
+  if(activeId===chat.id)activeId=chats[0]?.id||null;
+  persistChats();persistActive();
+  renderChatList();renderMessages();updateCount();
+  toast('Chat deleted');
+}
+
+/* ================= message rendering ================= */
+marked.setOptions({gfm:true,breaks:true});
+function renderMD(text){
+  const tmp=document.createElement('div');
+  tmp.innerHTML=DOMPurify.sanitize(marked.parse(text||''));
+  $$('a',tmp).forEach(a=>{a.target='_blank';a.rel='noopener noreferrer'});
+  $$('pre',tmp).forEach(pre=>{
+    if(pre.querySelector('.code-head'))return;
+    const code=pre.querySelector('code');
+    const lang=(code&&code.className.match(/language-([\w+#-]+)/)||[])[1]||'text';
+    const head=document.createElement('div');head.className='code-head';
+    head.innerHTML=`<span>${esc(lang)}</span><button class="code-copy" type="button">Copy</button>`;
+    pre.insertBefore(head,pre.firstChild);
+    if(code&&window.hljs){try{hljs.highlightElement(code)}catch(_){/* partial code */}}
+  });
+  return tmp.innerHTML;
+}
+function buildMsg(m,i,chat){
+  const wrap=document.createElement('div');
+  wrap.className='msg '+m.role;wrap.dataset.i=i;
+  const av=document.createElement('div');
+  av.className='avatar'+(m.role==='user'?' you':'');
+  if(m.role==='user')av.textContent=(settings.userName||'Y')[0].toUpperCase();
+  else av.innerHTML=AVATAR;
+  const bub=document.createElement('div');bub.className='bubble';
+  const head=document.createElement('div');head.className='msg-head';
+  const who=document.createElement('span');who.className='who';
+  who.textContent=m.role==='user'?(settings.userName||'You'):(settings.rexName||'Orex');
+  const when=document.createElement('span');when.className='when';when.textContent=fmtTime(m.ts);
+  head.append(who,when);
+  const body=document.createElement('div');body.className='msg-body';
+  fillBody(body,m);
+  bub.append(head,body);
+  if(m.role==='assistant'&&m.content&&chat&&i===chat.messages.length-1){
+    const acts=document.createElement('div');acts.className='msg-acts';
+    acts.innerHTML='<button data-act="copy" type="button">Copy</button><button data-act="regen" type="button">Regenerate</button>';
+    bub.appendChild(acts);
+  }
+  wrap.append(av,bub);
+  return wrap;
+}
+function fillBody(body,m){
+  if(m.role==='user'){
+    body.classList.add('plain');
+    if(m.images&&m.images.length){
+      const gal=document.createElement('div');gal.className='msg-imgs';
+      m.images.forEach(u=>{const im=document.createElement('img');im.src=u;im.alt='attached image';gal.appendChild(im)});
+      body.appendChild(gal);
+      const txt=document.createElement('span');txt.textContent=m.content||'';body.appendChild(txt);
+    }else body.textContent=m.content||'';
+  }else{
+    body.innerHTML=m.content?renderMD(m.content):'<div class="typing"><i></i><i></i><i></i></div>';
+  }
+}
+function renderMessages(){
+  const chat=activeChat();
+  log.innerHTML='';
+  if(!chat||!chat.messages.length){log.innerHTML=emptyHero();return}
+  chat.messages.forEach((m,i)=>log.appendChild(buildMsg(m,i,chat)));
+  stick=true;log.scrollTop=log.scrollHeight;
+}
+function emptyHero(){
+  const name=settings.userName?`, ${esc(settings.userName)}`:'';
+  const qs=[
+    "Explain quantum entanglement like I'm 12",
+    'My CSS grid keeps overflowing on mobile — how do I debug it?',
+    'Draft a polite email asking for a two-day deadline extension',
+    'Plan a 3-day trip to Lisbon on a $500 budget',
+  ];
+  return `<div class="hero-empty">
+    <svg class="hero-logo" viewBox="0 0 48 48" aria-hidden="true">${LOGO}</svg>
+    <h1>How can I help${name}?</h1>
+    <p>${esc(settings.rexName||'Orex')} runs on your own Groq key — your chats stay in this browser.</p>
+    <div class="sugs">${qs.map(q=>`<button class="sug" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+  </div>`;
+}
+log.addEventListener('scroll',()=>{stick=log.scrollHeight-log.scrollTop-log.clientHeight<90},{passive:true});
+const scrollDown=()=>{if(stick)log.scrollTop=log.scrollHeight};
+
+log.addEventListener('click',e=>{
+  const sug=e.target.closest('.sug');
+  if(sug){input.value=sug.dataset.q;autosize();sendMessage();return}
+  const cc=e.target.closest('.code-copy');
+  if(cc){
+    const pre=cc.closest('pre');
+    navigator.clipboard.writeText((pre.querySelector('code')||{}).innerText||'')
+      .then(()=>{cc.textContent='Copied';setTimeout(()=>cc.textContent='Copy',1400)});
+    return;
+  }
+  const act=e.target.closest('[data-act]');if(!act)return;
+  const msgEl=act.closest('.msg');const i=+msgEl.dataset.i;
+  const chat=activeChat();if(!chat)return;
+  if(act.dataset.act==='copy'){
+    navigator.clipboard.writeText((chat.messages[i]||{}).content||'')
+      .then(()=>toast('Copied to clipboard','ok'))
+      .catch(()=>toast('Copy failed','error'));
+  }else if(act.dataset.act==='regen'){
+    if(streaming)return;
+    chat.messages.splice(i);
+    persistChats();renderMessages();updateCount();
+    streamReply(chat);
+  }
+});
+
+/* ================= input ================= */
+function autosize(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,170)+'px'}
+input.addEventListener('input',autosize);
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#chat-form').requestSubmit()}
+});
+ $('#chat-form').addEventListener('submit',e=>{
+  e.preventDefault();
+  if(streaming){stopStream();return}
+  sendMessage();
+});
+function setStreamUI(on){
+  const b=$('#send-btn');
+  b.textContent=on?'Stop':'Send';
+  b.classList.toggle('stop',on);
+  b.title=on?'Stop generating':'Send message (Enter)';
+}
+function stopStream(){if(controller)controller.abort()}
+
+/* ================= prompts ================= */
+function systemPrompt(){
+  const R=settings.rexName||'Orex';
+  let s={
+    smart:`You are ${R}, the user's AI companion. Match the question: relaxed and brief for simple things, thorough and rigorous for hard ones. Use Markdown where it helps.`,
+    casual:`You are ${R}. Keep replies short, warm and conversational — a few sentences unless asked to expand. Avoid heavy formatting.`,
+    coder:`You are ${R}, a senior software engineer. Be precise and technical. Lead with working code in fenced blocks tagged with the language, then explain briefly. Prefer modern best practices and mention edge cases.`,
+    teacher:`You are ${R}, a deep-dive tutor. Build intuition first, define key terms, use worked examples and analogies, then go one level deeper than the surface. Structure with Markdown.`
+  }[settings.mode];
+  if(settings.userName)s+=` The user's name is ${settings.userName}.`;
+  if(settings.memoryOn&&memory.length)s+=`\n\nThings you remember about the user (use naturally, don't recite):\n- `+memory.join('\n- ');
+  s+=`\n\nToday is ${new Date().toDateString()}.`;
+  return s;
+}
+function apiMessages(chat){
+  const msgs=[{role:'system',content:systemPrompt()}];
+  for(const m of chat.messages.slice(-24)){
+    if(m.role==='user'&&m.images&&m.images.length){
+      msgs.push({role:'user',content:[
+        {type:'text',text:m.sources?m.content+'\n\n'+m.sources:(m.content||'Describe the attached image(s).')},
+        ...m.images.map(u=>({type:'image_url',image_url:{url:u}}))
+      ]});
+    }else if(m.content){
+      msgs.push({role:m.role,content:m.sources?m.content+'\n\n'+m.sources:m.content});
+    }
+  }
+  return msgs;
+}
+function humanError(status,data){
+  const m=data&&data.error&&data.error.message;
+  if(status===401)return 'Invalid API key — paste a fresh gsk_… key in Settings.';
+  if(status===429)return 'Rate limit reached — wait a few seconds and try again.'+(m?' ('+m+')':'');
+  if(status===404)return 'Model unavailable — Groq may have rotated model IDs. Update the CFG block at the top of the code.';
+  if(status===413)return 'That request was too large — try shorter text or fewer images.';
+  return m?('Groq error: '+m):('Request failed ('+status+')');
+}
+
+/* ================= send / stream ================= */
+function addUser(chat,m){
+  m.role='user';m.ts=Date.now();
+  chat.messages.push(m);
+  if(!chat.temp)persistChats();
+  const hero=log.querySelector('.hero-empty');if(hero)log.innerHTML='';
+  log.appendChild(buildMsg(m,chat.messages.length-1,chat));
+  updateCount();stick=true;scrollDown();
+}
+async function sendMessage(){
+  if(streaming)return;
+  let text=input.value.trim();
+  const hasAtt=pendingImages.length||pendingFiles.length;
+  if(!text&&!hasAtt)return;
+  let chat=activeChat()||createChat('New chat',false);
+  /* image generation needs no API key */
+  if(pendingTool==='image'){
+    const prompt=text||'A serene landscape at golden hour, cinematic lighting';
+    pendingTool=null;input.placeholder='Talk to Orex...';
+    input.value='';autosize();
+    if(text)addUser(chat,{content:'Generate an image: '+prompt});
+    return generateImage(prompt,chat);
+  }
+  if(!settings.apiKey){openSettings('general');toast('Add your free Groq API key to start chatting','warn');return}
+  if(pendingFiles.length){
+    text+='\n\n'+pendingFiles.map(f=>`--- attached file: ${f.name} ---\n${f.text}`).join('\n\n');
+    pendingFiles=[];
+  }
+  const imgs=pendingImages.map(p=>p.dataUrl);pendingImages=[];
+  renderPreviews();
+  input.value='';autosize();
+  addUser(chat,{content:text,images:imgs.length?imgs:undefined});
+  if(chat.name==='New chat'&&text){
+    chat.name=text.slice(0,40)+(text.length>40?'…':'');
+    renderChatList();if(!chat.temp)persistChats();
+  }
+  await streamReply(chat);
+  maybeRemember(chat);
+}
+async function streamReply(chat){
+  const lastUser=[...chat.messages].reverse().find(m=>m.role==='user');
+  const model=(lastUser&&lastUser.images&&lastUser.images.length)?CFG.vision:CFG.model;
+  streaming=true;setStreamUI(true);setStatus('Thinking…','busy');
+  const aMsg={role:'assistant',content:'',ts:Date.now()};
+  const ph=buildMsg(aMsg,chat.messages.length,chat);
+  log.appendChild(ph);stick=true;scrollDown();
+  const body=ph.querySelector('.msg-body');
+  controller=new AbortController();
+  let painted=0;
+  const paint=force=>{
+    const now=performance.now();
+    if(!force&&now-painted<90)return;
+    painted=now;
+    body.innerHTML=renderMD(aMsg.content)+'<span class="caret"></span>';
+    scrollDown();
+  };
+  const commit=()=>{
+    aMsg.ts=Date.now();
+    chat.messages.push(aMsg);
+    ph.dataset.i=chat.messages.length-1;
+    body.innerHTML=renderMD(aMsg.content);
+    const acts=document.createElement('div');acts.className='msg-acts';
+    acts.innerHTML='<button data-act="copy" type="button">Copy</button><button data-act="regen" type="button">Regenerate</button>';
+    ph.querySelector('.bubble').appendChild(acts);
+    if(!chat.temp)persistChats();
+    updateCount();scrollDown();
+  };
+  try{
+    const res=await fetch(CFG.base+'/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+settings.apiKey},
+      body:JSON.stringify({model,messages:apiMessages(chat),stream:true,temperature:MODES[settings.mode].temp}),
+      signal:controller.signal
+    });
+    if(!res.ok)throw new Error(humanError(res.status,await res.json().catch(()=>null)));
+    setStatus('Streaming…','busy');
+    const reader=res.body.getReader(),dec=new TextDecoder();
+    let buf='';
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){
+        const t=line.trim();
+        if(!t.startsWith('data:'))continue;
+        const payload=t.slice(5).trim();
+        if(payload==='[DONE]')continue;
+        try{
+          const j=JSON.parse(payload);
+          const d=j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
+          if(d){aMsg.content+=d;paint()}
+        }catch(_){/* partial JSON */}
+      }
+    }
+    commit();
+  }catch(err){
+    const aborted=err.name==='AbortError';
+    if(aborted&&aMsg.content){commit();setStatus('Stopped')}
+    else if(aborted){ph.remove();setStatus('Stopped')}
+    else{
+      body.innerHTML=`<div class="err-box">${esc(err.message)}</div>`;
+      setStatus('Error','err');
+      toast(err.message,'error');
+    }
+    if(!chat.temp)persistChats();
+    updateCount();
+  }finally{
+    streaming=false;controller=null;setStreamUI(false);
+    setTimeout(()=>{if(!streaming)setStatus('Ready')},1500);
+  }
+}
+
+/* ================= memory ================= */
+function maybeRemember(chat){
+  if(!settings.memoryOn||!settings.apiKey)return;
+  userMsgTicks++;
+  if(userMsgTicks%3)return;
+  const recent=chat.messages.filter(m=>m.role==='user').slice(-3).map(m=>m.content).join('\n').slice(0,1500);
+  if(!recent)return;
+  fetch(CFG.base+'/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+settings.apiKey},
+    body:JSON.stringify({model:CFG.fast,temperature:0,messages:[
+      {role:'system',content:'Extract durable facts about the user from this snippet (name, preferences, projects, goals, constraints). Reply with ONLY a JSON array of short third-person strings, e.g. ["The user\'s name is Sam"]. If there are none, reply [].'},
+      {role:'user',content:recent}
+    ]})
+  }).then(r=>r.json()).then(j=>{
+    const txt=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'[]';
+    const m=txt.match(/\[[\s\S]*\]/);if(!m)return;
+    const arr=JSON.parse(m[0]);let added=false;
+    arr.forEach(f=>{
+      const s=String(f).slice(0,140);
+      if(s&&!memory.some(x=>x.toLowerCase()===s.toLowerCase())){memory.push(s);added=true}
+    });
+    if(added){memory=memory.slice(-30);persistMemory();renderMemory()}
+  }).catch(()=>{});
+}
+function renderMemory(){
+  const box=$('#memory-list');box.innerHTML='';
+  if(!memory.length){box.innerHTML='<p class="memory-empty">Nothing yet — Orex will pick things up as you chat.</p>';return}
+  memory.forEach((f,i)=>{
+    const d=document.createElement('div');d.className='memory-item';
+    const s=document.createElement('span');s.textContent=f;
+    const b=document.createElement('button');b.type='button';b.textContent='✕';b.setAttribute('aria-label','Forget this');
+    b.addEventListener('click',()=>{memory.splice(i,1);persistMemory();renderMemory()});
+    d.append(s,b);box.appendChild(d);
+  });
+}
+ $('#memory-enabled-checkbox').addEventListener('change',e=>{settings.memoryOn=e.target.checked;persistSettings()});
+ $('#memory-clear-btn').addEventListener('click',()=>{memory=[];persistMemory();renderMemory();toast('Memory cleared','ok')});
+
+/* ================= attachments ================= */
+function handleFiles(e){
+  [...e.target.files].forEach(f=>{
+    if(f.type.startsWith('image/')){
+      imageToDataUrl(f).then(d=>{if(d){pendingImages.push({dataUrl:d,name:f.name});renderPreviews()}});
+    }else if(isTextFile(f)){
+      f.slice(0,200000).text().then(t=>{
+        pendingFiles.push({name:f.name,text:t.length>14000?t.slice(0,14000)+'\n…(truncated)':t});
+        renderPreviews();
+      });
+    }else toast(`"${f.name}" isn't a text file or image — skipped`,'warn');
+  });
+  e.target.value='';
+}
+function isTextFile(f){
+  return /^(text\/|application\/(json|xml|javascript|x-sh|sql))/.test(f.type)
+    ||/\.(txt|md|markdown|json|js|ts|jsx|tsx|css|html|xml|svg|csv|py|rb|go|rs|java|c|h|cpp|cs|php|sh|yml|yaml|toml|ini|env|log)$/i.test(f.name);
+}
+function imageToDataUrl(file){
+  return new Promise(res=>{
+    if(file.size<400000){const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>res(null);r.readAsDataURL(file);return}
+    const img=new Image();
+    img.onload=()=>{
+      const s=Math.min(1,1100/Math.max(img.width,img.height));
+      const cv=document.createElement('canvas');
+      cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      res(cv.toDataURL('image/jpeg',.85));
+    };
+    img.onerror=()=>res(null);
+    img.src=URL.createObjectURL(file);
+  });
+}
+function renderPreviews(){
+  const box=$('#previews');box.innerHTML='';
+  pendingImages.forEach((p,idx)=>{
+    const d=document.createElement('div');d.className='pv';
+    d.innerHTML=`<img src="${p.dataUrl}" alt=""><span></span><button type="button" aria-label="Remove">✕</button>`;
+    d.querySelector('span').textContent=p.name;
+    d.querySelector('button').addEventListener('click',()=>{pendingImages.splice(idx,1);renderPreviews()});
+    box.appendChild(d);
+  });
+  pendingFiles.forEach((f,idx)=>{
+    const d=document.createElement('div');d.className='pv';
+    d.innerHTML=`<span></span><button type="button" aria-label="Remove">✕</button>`;
+    d.querySelector('span').textContent=f.name;
+    d.querySelector('button').addEventListener('click',()=>{pendingFiles.splice(idx,1);renderPreviews()});
+    box.appendChild(d);
+  });
+}
+ $('#image-input').addEventListener('change',handleFiles);
+ $('#file-input').addEventListener('change',handleFiles);
+ $('#attach-files-btn').addEventListener('click',()=>{closeMenus();$('#file-input').click()});
+
+/* ================= tools ================= */
+/* image generation (free, via Pollinations — no key needed) */
+ $('#attach-generate-btn').addEventListener('click',()=>{
+  closeMenus();pendingTool='image';
+  input.placeholder='Describe the image to generate…';input.focus();
+  toast('Describe the image, then press Send');
+});
+async function generateImage(prompt,chat){
+  if(streaming)return;
+  const hero=log.querySelector('.hero-empty');if(hero)log.innerHTML='';
+  const aMsg={role:'assistant',content:'',ts:Date.now()};
+  chat.messages.push(aMsg);
+  const ph=buildMsg(aMsg,chat.messages.length-1,chat);
+  ph.querySelector('.msg-body').innerHTML='<div class="typing"><i></i><i></i><i></i></div>';
+  log.appendChild(ph);stick=true;scrollDown();updateCount();
+  setStatus('Painting…','busy');
+  const url=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${(Math.random()*1e6)|0}`;
+  const ok=await new Promise(res=>{const im=new Image();im.onload=()=>res(true);im.onerror=()=>res(false);im.src=url});
+  aMsg.content=ok
+    ?`Here's your image — *"${prompt}"*\n\n![${prompt.replace(/[\[\]]/g,'').slice(0,80)}](${url})`
+    :`⚠️ Image generation failed for *"${prompt}"*. The free image service didn't respond — try again in a moment.`;
+  ph.querySelector('.msg-body').innerHTML=renderMD(aMsg.content);
+  if(!chat.temp)persistChats();
+  updateCount();scrollDown();setStatus('Ready');
+}
+
+/* research (fetches page text through the r.jina.ai reader proxy) */
+ $('#research-urls-btn').addEventListener('click',()=>openModal('research-overlay'));
+ $('#attach-research-btn').addEventListener('click',()=>{closeMenus();openModal('research-overlay');$('#research-urls-input').focus()});
+ $('#research-cancel-btn').addEventListener('click',()=>closeModal('research-overlay'));
+ $('#research-start-btn').addEventListener('click',async()=>{
+  const urls=$('#research-urls-input').value.split('\n').map(s=>s.trim()).filter(s=>/^https?:\/\//i.test(s)).slice(0,5);
+  const focus=$('#research-focus').value.trim();
+  if(!urls.length){toast('Paste at least one URL starting with http(s)://','warn');return}
+  if(streaming){toast('Wait for the current reply to finish','warn');return}
+  closeModal('research-overlay');
+  const chat=activeChat()||createChat('Research',false);
+  addUser(chat,{content:`Research these sources${focus?` with focus on: ${focus}`:''}:\n${urls.join('\n')}`});
+  const blocks=[];
+  for(let i=0;i<urls.length;i++){
+    setStatus(`Reading source ${i+1}/${urls.length}…`,'busy');
+    try{
+      const r=await fetch('https://r.jina.ai/'+urls[i]);
+      if(!r.ok)throw new Error(r.status);
+      let txt=await r.text();
+      if(txt.length>7000)txt=txt.slice(0,7000)+'…';
+      blocks.push(`### [${i+1}] ${urls[i]}\n\n${txt}`);
+    }catch(_){blocks.push(`### [${i+1}] ${urls[i]}\n\n(fetch failed — the site may block automated readers)`)}
+  }
+  const um=chat.messages[chat.messages.length-1];
+  um.sources=blocks.join('\n\n---\n\n');
+  if(!chat.temp)persistChats();
+  await streamReply(chat);
+});
+
+/* quiz */
+ $('#attach-quiz-btn').addEventListener('click',()=>{closeMenus();openModal('quiz-overlay');$('#quiz-topic').focus()});
+ $('#quiz-cancel-btn').addEventListener('click',()=>closeModal('quiz-overlay'));
+ $('#quiz-start-btn').addEventListener('click',()=>{
+  const topic=$('#quiz-topic').value.trim();
+  if(!topic){toast('Give me a topic first','warn');return}
+  if(streaming){toast('Wait for the current reply to finish','warn');return}
+  closeModal('quiz-overlay');
+  const chat=activeChat()||createChat('Quiz',false);
+  addUser(chat,{content:`Quiz me on **${topic}**. Ask 5 questions one at a time. After each of my answers, tell me if I was right with a one-line explanation, then ask the next. Keep score and give my final grade at the end.`});
+  streamReply(chat);
+});
+
+/* wikipedia */
+ $('#attach-wiki-btn').addEventListener('click',()=>{closeMenus();openModal('wiki-overlay');$('#wiki-topic').focus()});
+ $('#wiki-cancel-btn').addEventListener('click',()=>closeModal('wiki-overlay'));
+ $('#wiki-start-btn').addEventListener('click',async()=>{
+  const topic=$('#wiki-topic').value.trim();
+  if(!topic){toast('Type a topic first','warn');return}
+  closeModal('wiki-overlay');
+  if(streaming){toast('Wait for the current reply to finish','warn');return}
+  const chat=activeChat()||createChat('Wikipedia',false);
+  setStatus('Checking Wikipedia…','busy');
+  try{
+    let sum=await wikiSummary(topic);
+    if(!sum){
+      const s=await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(topic)}&format=json&origin=*&srlimit=1`).then(r=>r.json());
+      const title=s.query&&s.query.search&&s.query.search[0]&&s.query.search[0].title;
+      sum=title?await wikiSummary(title):null;
+    }
+    if(!sum){toast('No Wikipedia article found','warn');setStatus('Ready');return}
+    const aMsg={role:'assistant',ts:Date.now(),content:`### ${sum.title}\n\n${sum.extract}\n\n[Read the full article](${sum.url})`};
+    chat.messages.push(aMsg);
+    const hero=log.querySelector('.hero-empty');if(hero)log.innerHTML='';
+    log.appendChild(buildMsg(aMsg,chat.messages.length-1,chat));
+    if(!chat.temp)persistChats();
+    updateCount();scrollDown();setStatus('Ready');
+  }catch(_){toast('Wikipedia request failed','error');setStatus('Ready')}
+});
+async function wikiSummary(t){
+  const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(t.replace(/\s+/g,'_')));
+  if(!r.ok)return null;
+  const j=await r.json();
+  return j.type==='standard'?{title:j.title,extract:j.extract,url:j.content_urls&&j.content_urls.desktop.page}:null;
+}
+
+/* dictionary */
+ $('#attach-dict-btn').addEventListener('click',()=>{closeMenus();openModal('dict-overlay');$('#dict-word').focus()});
+ $('#dict-cancel-btn').addEventListener('click',()=>closeModal('dict-overlay'));
+ $('#dict-start-btn').addEventListener('click',async()=>{
+  const word=$('#dict-word').value.trim();
+  if(!word){toast('Type a word first','warn');return}
+  closeModal('dict-overlay');
+  if(streaming){toast('Wait for the current reply to finish','warn');return}
+  const chat=activeChat()||createChat('Dictionary',false);
+  setStatus('Looking it up…','busy');
+  try{
+    const r=await fetch('https://api.dictionaryapi.dev/api/v2/entries/en/'+encodeURIComponent(word));
+    if(!r.ok)throw new Error('notfound');
+    const j=await r.json();
+    const e0=j[0];
+    let md=`### ${e0.word}${e0.phonetic?'  ·  '+e0.phonetic:''}\n\n`;
+    (e0.meanings||[]).slice(0,4).forEach(m=>{
+      md+=`**${m.partOfSpeech}**\n`;
+      (m.definitions||[]).slice(0,3).forEach((d,i)=>{md+=`${i+1}. ${d.definition}${d.example?`  \n_*"${d.example}"*_`:''}\n`});
+      md+='\n';
+    });
+    const aMsg={role:'assistant',ts:Date.now(),content:md};
+    chat.messages.push(aMsg);
+    const hero=log.querySelector('.hero-empty');if(hero)log.innerHTML='';
+    log.appendChild(buildMsg(aMsg,chat.messages.length-1,chat));
+    if(!chat.temp)persistChats();
+    updateCount();scrollDown();setStatus('Ready');
+  }catch(_){
+    setStatus('Ready');
+    addUser(chat,{content:`Define the word "${word}" — meaning, part of speech, example usage, and origin.`});
+    await streamReply(chat);
+  }
+});
+
+/* ================= new chat popup ================= */
+ $('#new-chat-btn').addEventListener('click',()=>{
+  $('#new-chat-name').value='';$('#temp-chat-checkbox').checked=false;
+  openModal('popup-overlay');$('#new-chat-name').focus();
+});
+ $('#cancel-chat-btn').addEventListener('click',()=>closeModal('popup-overlay'));
+ $('#create-chat-btn').addEventListener('click',()=>{
+  const name=$('#new-chat-name').value.trim()||'New chat';
+  const temp=$('#temp-chat-checkbox').checked;
+  closeModal('popup-overlay');
+  if(streaming)stopStream();
+  createChat(name,temp);
+  toast(temp?"Temporary chat — it won't be saved":'New chat created','ok');
+  input.focus();
+});
+
+/* ================= clear / export / about ================= */
+ $('#clear-btn').addEventListener('click',async()=>{
+  const chat=activeChat();
+  if(!chat||!chat.messages.length){toast('Nothing to clear','warn');return}
+  if(await askConfirm('Clear this chat?',`Remove all ${chat.messages.length} messages from "${chat.name}"?`,'Clear',false)){
+    if(streaming)stopStream();
+    chat.messages=[];persistChats();renderMessages();updateCount();
+    toast('Chat cleared','ok');
+  }
+});
+ $('#export-btn').addEventListener('click',async()=>{
+  const saved=chats.filter(c=>!c.temp);
+  if(await askConfirm('Export all chats?',`Downloads a JSON backup of ${saved.length} chat(s) + memory.`,'Export',false)){
+    const data={app:'Orex AI',version:'1.5',exported:new Date().toISOString(),chats:saved,memory};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='orex-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('Backup downloaded','ok');
+  }
+});
+ $('#about-btn').addEventListener('click',()=>openModal('about-overlay'));
+ $('#close-about-btn').addEventListener('click',()=>closeModal('about-overlay'));
+
+/* ================= settings ================= */
+function switchTab(name){
+  $$('.settings-tab').forEach(b=>{const on=b.dataset.tab===name;b.classList.toggle('active',on);b.setAttribute('aria-selected',on)});
+  $$('.settings-tab-content').forEach(p=>p.classList.toggle('hidden',p.id!=='settings-tab-'+name));
+}
+ $$('.settings-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+function openSettings(tab='general'){
+  $('#rex-name').value=settings.rexName;
+  $('#user-name').value=settings.userName;
+  $('#api-key-input').value=settings.apiKey;
+  $('#memory-enabled-checkbox').checked=settings.memoryOn;
+  $$('.appearance-option').forEach(b=>b.classList.toggle('active',b.dataset.theme===settings.theme));
+  switchTab(tab);
+  openModal('settings-overlay');
+}
+ $('#open-settings-btn').addEventListener('click',()=>openSettings());
+ $('#close-settings-x').addEventListener('click',()=>closeModal('settings-overlay'));
+ $('#save-settings').addEventListener('click',()=>{
+  settings.rexName=$('#rex-name').value.trim()||'Orex';
+  settings.userName=$('#user-name').value.trim();
+  settings.apiKey=$('#api-key-input').value.trim();
+  settings.memoryOn=$('#memory-enabled-checkbox').checked;
+  persistSettings();applyBrand();renderMessages();
+  closeModal('settings-overlay');
+  toast('Settings saved','ok');
+});
+ $$('.appearance-option').forEach(b=>b.addEventListener('click',()=>{
+  settings.theme=b.dataset.theme;applyTheme();persistSettings();
+  $$('.appearance-option').forEach(x=>x.classList.toggle('active',x===b));
+}));
+
+/* ================= menus / theme / mobile ================= */
+const attachMenu=$('#attach-menu'),modeMenu=$('#mode-menu'),attachBtn=$('#attach-btn'),modeBtn=$('#mode-btn');
+function closeMenus(){
+  attachMenu.classList.add('hidden');modeMenu.classList.add('hidden');
+  attachBtn.setAttribute('aria-expanded','false');modeBtn.setAttribute('aria-expanded','false');
+}
+function toggleMenu(menu,btn,other){
+  const show=menu.classList.contains('hidden');
+  other.classList.add('hidden');
+  menu.classList.toggle('hidden',!show);
+  btn.setAttribute('aria-expanded',show);
+  other.previousElementSibling===null; /* no-op */
+}
+attachBtn.addEventListener('click',e=>{
+  e.stopPropagation();
+  const show=attachMenu.classList.contains('hidden');
+  modeMenu.classList.add('hidden');modeBtn.setAttribute('aria-expanded','false');
+  attachMenu.classList.toggle('hidden',!show);
+  attachBtn.setAttribute('aria-expanded',show);
+});
+modeBtn.addEventListener('click',e=>{
+  e.stopPropagation();
+  const show=modeMenu.classList.contains('hidden');
+  attachMenu.classList.add('hidden');attachBtn.setAttribute('aria-expanded','false');
+  modeMenu.classList.toggle('hidden',!show);
+  modeBtn.setAttribute('aria-expanded',show);
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.menu')&&!e.target.closest('#attach-btn')&&!e.target.closest('#mode-btn'))closeMenus();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeAllModals();closeMenus();closeSidebarMobile()}
+});
+ $$('.mode-item').forEach(b=>b.addEventListener('click',()=>{
+  settings.mode=b.dataset.mode;persistSettings();updateModeLabel();closeMenus();
+  toast('Mode: '+MODES[settings.mode].label);
+}));
+function updateModeLabel(){$('#mode-btn-label').textContent=MODES[settings.mode].label}
+ $('#theme-toggle').addEventListener('click',()=>{
+  settings.theme=settings.theme==='dark'?'light':'dark';
+  applyTheme();persistSettings();
+});
+ $('#menu-btn').addEventListener('click',()=>{$('#sidebar').classList.add('open');$('#scrim').classList.add('show')});
+ $('#scrim').addEventListener('click',closeSidebarMobile);
+
+/* ================= init ================= */
+applyTheme();applyBrand();updateModeLabel();
+renderChatList();renderMessages();updateCount();renderMemory();autosize();
+if(!settings.apiKey)setTimeout(()=>{
+  openSettings('general');
+  toast('Welcome to Orex — grab a free Groq key to start','ok');
+},500);
+})();
+</script>
 </body>
 </html>
