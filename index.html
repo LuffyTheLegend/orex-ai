@@ -1372,29 +1372,22 @@ function openSettings(tab='general'){
 /* ================= menus / theme / mobile ================= */
 const attachMenu=$('#attach-menu'),modeMenu=$('#mode-menu'),attachBtn=$('#attach-btn'),modeBtn=$('#mode-btn');
 function closeMenus(){
-  attachMenu.classList.add('hidden');modeMenu.classList.add('hidden');
+  attachMenu.classList.remove('show');modeMenu.classList.remove('show');
   attachBtn.setAttribute('aria-expanded','false');modeBtn.setAttribute('aria-expanded','false');
-}
-function toggleMenu(menu,btn,other){
-  const show=menu.classList.contains('hidden');
-  other.classList.add('hidden');
-  menu.classList.toggle('hidden',!show);
-  btn.setAttribute('aria-expanded',show);
-  other.previousElementSibling===null; /* no-op */
 }
 attachBtn.addEventListener('click',e=>{
   e.stopPropagation();
-  const show=attachMenu.classList.contains('hidden');
-  modeMenu.classList.add('hidden');modeBtn.setAttribute('aria-expanded','false');
-  attachMenu.classList.toggle('hidden',!show);
-  attachBtn.setAttribute('aria-expanded',show);
+  const willShow=!attachMenu.classList.contains('show');
+  modeMenu.classList.remove('show');modeBtn.setAttribute('aria-expanded','false');
+  attachMenu.classList.toggle('show',willShow);
+  attachBtn.setAttribute('aria-expanded',willShow);
 });
 modeBtn.addEventListener('click',e=>{
   e.stopPropagation();
-  const show=modeMenu.classList.contains('hidden');
-  attachMenu.classList.add('hidden');attachBtn.setAttribute('aria-expanded','false');
-  modeMenu.classList.toggle('hidden',!show);
-  modeBtn.setAttribute('aria-expanded',show);
+  const willShow=!modeMenu.classList.contains('show');
+  attachMenu.classList.remove('show');attachBtn.setAttribute('aria-expanded','false');
+  modeMenu.classList.toggle('show',willShow);
+  modeBtn.setAttribute('aria-expanded',willShow);
 });
 document.addEventListener('click',e=>{
   if(!e.target.closest('.menu')&&!e.target.closest('#attach-btn')&&!e.target.closest('#mode-btn'))closeMenus();
